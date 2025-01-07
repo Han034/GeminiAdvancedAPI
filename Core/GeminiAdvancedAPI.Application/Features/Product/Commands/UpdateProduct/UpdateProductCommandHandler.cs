@@ -1,4 +1,5 @@
-﻿using GeminiAdvancedAPI.Application.Interfaces.Repositories;
+﻿using AutoMapper;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -11,10 +12,12 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct
 	public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, Unit>
 	{
 		private readonly IProductRepository _productRepository;
+		private readonly IMapper _mapper;
 
-		public UpdateProductCommandHandler(IProductRepository productRepository)
+		public UpdateProductCommandHandler(IProductRepository productRepository, IMapper mapper)
 		{
 			_productRepository = productRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -26,10 +29,8 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct
 				throw new Exception("Product not found"); // İleride daha anlamlı bir exception fırlatılabilir.
 			}
 
-			product.Name = request.Name;
-			product.Description = request.Description;
-			product.Price = request.Price;
-			product.Stock = request.Stock;
+			_mapper.Map(request, product);
+
 			product.UpdatedDate = DateTime.Now;
 
 			await _productRepository.UpdateAsync(product);
