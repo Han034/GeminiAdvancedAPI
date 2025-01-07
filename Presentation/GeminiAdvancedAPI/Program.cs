@@ -2,6 +2,7 @@ using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using GeminiAdvancedAPI.Persistence.Contexts;
 using GeminiAdvancedAPI.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using GeminiAdvancedAPI.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddApplicationServices();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
