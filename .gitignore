@@ -1,0 +1,16 @@
+.vs/*
+obj/*
+bin/*
+
+Infrastructure/GeminiAdvancedAPI.Infrastructure/bin/*
+Infrastructure/GeminiAdvancedAPI.Infrastructure/obj/*
+Infrastructure/GeminiAdvancedAPI.Persistence/bin/*
+Infrastructure/GeminiAdvancedAPI.Persistence/obj/*
+Presentation/GeminiAdvancedAPI/bin/*
+Presentation/GeminiAdvancedAPI/obj/*
+Core/GeminiAdvancedAPI.Application/bin/*
+Core/GeminiAdvancedAPI.Application/obj/*
+Core/GeminiAdvancedAPI.Domain/obj/*
+Core/GeminiAdvancedAPI.Domain/bin/*
+
+
