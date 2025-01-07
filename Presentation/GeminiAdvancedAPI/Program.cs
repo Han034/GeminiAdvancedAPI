@@ -3,6 +3,8 @@ using GeminiAdvancedAPI.Persistence.Contexts;
 using GeminiAdvancedAPI.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using GeminiAdvancedAPI.Application;
+using GeminiAdvancedAPI.Middleware;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
+	app.UseGlobalExceptionHandling();
 	app.UseSwaggerUI();
 }
 
@@ -37,3 +40,11 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public static class ExceptionMiddlewareExtensions
+{
+	public static void UseGlobalExceptionHandling(this IApplicationBuilder app)
+	{
+		app.UseMiddleware<ExceptionMiddleware>();
+	}
+}

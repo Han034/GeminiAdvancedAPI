@@ -1,4 +1,5 @@
-﻿using GeminiAdvancedAPI.Application.Interfaces.Repositories;
+﻿using GeminiAdvancedAPI.Application.Exceptions;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.DeleteProduct
 
 			if (product == null)
 			{
-				throw new Exception("Product not found"); // İleride daha anlamlı bir exception fırlatılabilir.
+				throw new NotFoundException($"Product with id {request.Id} not found");
 			}
 
 			await _productRepository.DeleteAsync(product);

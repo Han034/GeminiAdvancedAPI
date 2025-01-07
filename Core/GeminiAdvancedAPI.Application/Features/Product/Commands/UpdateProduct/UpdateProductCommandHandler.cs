@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GeminiAdvancedAPI.Application.Exceptions;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
@@ -26,7 +27,7 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct
 
 			if (product == null)
 			{
-				throw new Exception("Product not found"); // İleride daha anlamlı bir exception fırlatılabilir.
+				throw new NotFoundException($"Product with id {request.Id} not found");
 			}
 
 			_mapper.Map(request, product);
