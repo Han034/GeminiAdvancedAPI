@@ -1,4 +1,4 @@
-@GeminiAdvancedAPI_HostAddress = http://localhost:5058
+@GeminiAdvancedAPI_HostAddress = http://localhost:5086
 
 GET {{GeminiAdvancedAPI_HostAddress}}/weatherforecast/
 Accept: application/json

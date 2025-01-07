@@ -7,7 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Application\GeminiAdvancedAPI.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\GeminiAdvancedAPI.Infrastructure\GeminiAdvancedAPI.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
