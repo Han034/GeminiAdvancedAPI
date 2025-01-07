@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastru
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{09CB2F64-F07C-46E2-A74A-693F170C4E5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Application", "Core\Application\GeminiAdvancedAPI.Application.csproj", "{DD3F55AD-87AB-4958-ADC0-C1DFE8A74A05}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Domain", "Core\GeminiAdvancedAPI.Domain\GeminiAdvancedAPI.Domain.csproj", "{D0B54EBF-F3B3-4225-948D-5365A2D59830}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Infrastructure", "Infrastructure\GeminiAdvancedAPI.Infrastructure\GeminiAdvancedAPI.Infrastructure.csproj", "{3D903EAF-EC53-46BE-B94D-7DEA6F3B0405}"
@@ -19,16 +17,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Persisten
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI", "Presentation\GeminiAdvancedAPI\GeminiAdvancedAPI.csproj", "{7C45BBC6-250E-4279-B5E6-FAA42EB7F6CA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Application", "Core\GeminiAdvancedAPI.Application\GeminiAdvancedAPI.Application.csproj", "{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DD3F55AD-87AB-4958-ADC0-C1DFE8A74A05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD3F55AD-87AB-4958-ADC0-C1DFE8A74A05}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD3F55AD-87AB-4958-ADC0-C1DFE8A74A05}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD3F55AD-87AB-4958-ADC0-C1DFE8A74A05}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D0B54EBF-F3B3-4225-948D-5365A2D59830}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D0B54EBF-F3B3-4225-948D-5365A2D59830}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0B54EBF-F3B3-4225-948D-5365A2D59830}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,15 +41,19 @@ Global
 		{7C45BBC6-250E-4279-B5E6-FAA42EB7F6CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C45BBC6-250E-4279-B5E6-FAA42EB7F6CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C45BBC6-250E-4279-B5E6-FAA42EB7F6CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{DD3F55AD-87AB-4958-ADC0-C1DFE8A74A05} = {C3AFF321-5F98-4819-89F4-86CCBAA8110B}
 		{D0B54EBF-F3B3-4225-948D-5365A2D59830} = {C3AFF321-5F98-4819-89F4-86CCBAA8110B}
 		{3D903EAF-EC53-46BE-B94D-7DEA6F3B0405} = {44B994BA-F76D-4DE2-8743-DC21F4232252}
 		{7F1DBC00-4A63-4433-931F-6E0723BF5129} = {44B994BA-F76D-4DE2-8743-DC21F4232252}
 		{7C45BBC6-250E-4279-B5E6-FAA42EB7F6CA} = {09CB2F64-F07C-46E2-A74A-693F170C4E5D}
+		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61} = {C3AFF321-5F98-4819-89F4-86CCBAA8110B}
 	EndGlobalSection
 EndGlobal

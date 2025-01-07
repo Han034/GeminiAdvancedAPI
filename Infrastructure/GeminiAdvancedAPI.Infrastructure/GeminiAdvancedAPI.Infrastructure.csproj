@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Core\GeminiAdvancedAPI.Application\GeminiAdvancedAPI.Application.csproj" />
     <ProjectReference Include="..\GeminiAdvancedAPI.Persistence\GeminiAdvancedAPI.Persistence.csproj" />
   </ItemGroup>
 

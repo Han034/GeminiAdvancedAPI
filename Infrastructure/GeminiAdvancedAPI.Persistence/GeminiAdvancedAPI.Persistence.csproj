@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\Application\GeminiAdvancedAPI.Application.csproj" />
+    <ProjectReference Include="..\..\Core\GeminiAdvancedAPI.Application\GeminiAdvancedAPI.Application.csproj" />
     <ProjectReference Include="..\..\Core\GeminiAdvancedAPI.Domain\GeminiAdvancedAPI.Domain.csproj" />
   </ItemGroup>
 
