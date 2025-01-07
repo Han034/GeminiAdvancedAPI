@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GeminiAdvancedAPI.Application.Interfaces;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 
@@ -7,11 +8,11 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.CreateProduct
 {
 	public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Guid>
 	{
-		private readonly IProductRepository _productRepository;
+		private readonly IUnitOfWork _unitOfWork;
 		private readonly IMapper _mapper;
-		public CreateProductCommandHandler(IProductRepository productRepository, IMapper mapper)
+		public CreateProductCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
 		{
-			_productRepository = productRepository;
+			_unitOfWork = unitOfWork;
 			_mapper = mapper;
 		}
 
@@ -19,7 +20,8 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.CreateProduct
 		{
 			var product = _mapper.Map<Domain.Entities.Product>(request);
 			product.CreatedDate = DateTime.Now;
-			await _productRepository.AddAsync(product);
+			await _unitOfWork.Products.AddAsync(product);
+			await _unitOfWork.SaveChangesAsync();
 			return product.Id;
 		}
 	}

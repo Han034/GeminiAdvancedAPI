@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GeminiAdvancedAPI.Application.Exceptions;
+using GeminiAdvancedAPI.Application.Interfaces;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
@@ -12,18 +13,18 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct
 {
 	public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, Unit>
 	{
-		private readonly IProductRepository _productRepository;
+		private readonly IUnitOfWork _unitOfWork;
 		private readonly IMapper _mapper;
 
-		public UpdateProductCommandHandler(IProductRepository productRepository, IMapper mapper)
+		public UpdateProductCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
 		{
-			_productRepository = productRepository;
+			_unitOfWork = unitOfWork;
 			_mapper = mapper;
 		}
 
 		public async Task<Unit> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
 		{
-			var product = await _productRepository.GetByIdAsync(request.Id);
+			var product = await _unitOfWork.Products.GetByIdAsync(request.Id);
 
 			if (product == null)
 			{
@@ -34,7 +35,8 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct
 
 			product.UpdatedDate = DateTime.Now;
 
-			await _productRepository.UpdateAsync(product);
+			await _unitOfWork.Products.UpdateAsync(product);
+			await _unitOfWork.SaveChangesAsync();
 			return Unit.Value;
 		}
 	}

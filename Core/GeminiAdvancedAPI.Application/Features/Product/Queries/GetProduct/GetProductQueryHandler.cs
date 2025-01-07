@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GeminiAdvancedAPI.Application.Features.Product.Dtos;
+using GeminiAdvancedAPI.Application.Interfaces;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
@@ -12,17 +13,18 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Queries.GetProduct
 {
 	public class GetProductQueryHandler : IRequestHandler<GetProductQuery, ProductDto>
 	{
-		private readonly IProductRepository _productRepository;
+		private readonly IUnitOfWork _unitOfWork;
 		private readonly IMapper _mapper;
-		public GetProductQueryHandler(IProductRepository productRepository, IMapper mapper)
+
+		public GetProductQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
 		{
-			_productRepository = productRepository;
+			_unitOfWork = unitOfWork;
 			_mapper = mapper;
 		}
 
 		public async Task<ProductDto> Handle(GetProductQuery request, CancellationToken cancellationToken)
 		{
-			var product = await _productRepository.GetByIdAsync(request.Id);
+			var product = await _unitOfWork.Products.GetByIdAsync(request.Id);
 			return _mapper.Map<ProductDto>(product);
 		}
 	}

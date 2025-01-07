@@ -4,6 +4,8 @@ using GeminiAdvancedAPI.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using GeminiAdvancedAPI.Application;
 using GeminiAdvancedAPI.Middleware;
+using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Persistence;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,9 @@ builder.Services.AddApplicationServices();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 	options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
 var app = builder.Build();
 
