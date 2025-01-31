@@ -68,7 +68,7 @@ namespace GeminiAdvancedAPI.Controllers
                     var roles = await _userManager.GetRolesAsync(user);
 
                     // Access Token oluştur
-                    var accessToken = await _tokenService.CreateToken(user, roles);
+                    var accessToken = _tokenService.GenerateJwtToken(user, roles);
 
                     // Refresh Token oluştur
                     var refreshToken = Guid.NewGuid().ToString();
@@ -94,36 +94,7 @@ namespace GeminiAdvancedAPI.Controllers
             return BadRequest(ModelState);
         }
 
-        private string GenerateJwtToken(AppUser user, IList<string> roles)
-        {
-            var claims = new List<Claim>
-    {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.UserName) // Eğer JWT'de username kullanmak isterseniz
-    };
-
-            // Kullanıcının rollerini claim olarak ekle
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-
-            var token = new JwtSecurityToken(
-                _jwtSettings.Issuer,
-                _jwtSettings.Audience,
-                claims,
-                expires: expires,
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        
 
         [Authorize] // Sadece giriş yapmış kullanıcılar erişebilir
         [HttpGet("GetUser")]
@@ -272,20 +243,20 @@ namespace GeminiAdvancedAPI.Controllers
             {
                 return BadRequest("Invalid refresh token.");
             }
-            var roles = await _userManager.GetRolesAsync(user);
-            // Yeni bir access token oluştur
-            var newAccessToken = await _tokenService.CreateToken(user, roles);
 
-            // Yeni bir refresh token oluştur (isteğe bağlı)
-            var newRefreshToken = Guid.NewGuid().ToString();
-            user.RefreshToken = newRefreshToken;
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Yeni bir access token oluştur
+            var newAccessToken = _tokenService.GenerateJwtToken(user, roles);
+
+            // Refresh token'ın kullanım ömrünü uzat
             user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationDays);
             await _userManager.UpdateAsync(user);
 
             return Ok(new
             {
                 Token = newAccessToken,
-                RefreshToken = newRefreshToken
+                RefreshToken = request.RefreshToken // Mevcut refresh token'ı dön
             });
         }
     }
