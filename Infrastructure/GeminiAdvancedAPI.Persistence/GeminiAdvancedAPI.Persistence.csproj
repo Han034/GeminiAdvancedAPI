@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\Core\GeminiAdvancedAPI.Domain\GeminiAdvancedAPI.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

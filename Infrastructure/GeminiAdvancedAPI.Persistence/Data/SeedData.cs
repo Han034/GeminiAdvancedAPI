@@ -39,7 +39,9 @@ namespace GeminiAdvancedAPI.Persistence.Data
                         UserName = "admin@example.com",
                         Email = "admin@example.com",
                         FirstName = "Admin",
-                        LastName = "User"
+                        LastName = "User",
+                        RefreshToken = Guid.NewGuid().ToString(), // RefreshToken ataması
+                        RefreshTokenExpiryTime = DateTime.Now.AddDays(7) // RefreshTokenExpiryTime ataması (7 yerine JwtSettings'den okuyabilirsiniz)
                     };
                     await userManager.CreateAsync(adminUser, "Admin.123"); // Şifreye dikkat!
 

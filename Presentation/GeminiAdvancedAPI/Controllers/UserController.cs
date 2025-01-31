@@ -44,6 +44,11 @@ namespace GeminiAdvancedAPI.Controllers
                     // İsteğe bağlı: Kullanıcıya rol atama
                     await _userManager.AddToRoleAsync(user, "User");
 
+                    // Refresh Token oluştur ve ata
+                    user.RefreshToken = Guid.NewGuid().ToString();
+                    user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationDays); // _jwtSettings'e erişiminiz olduğundan emin olun
+                    await _userManager.UpdateAsync(user); // Kullanıcıyı güncelle
+
                     return Ok(new { UserId = user.Id });
                 }
                 else
