@@ -3,13 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using GeminiAdvancedAPI.Application.DTOs;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using GeminiAdvancedAPI.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using AutoMapper;
 
 namespace GeminiAdvancedAPI.Controllers
 {
@@ -22,14 +19,16 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly RoleManager<AppRole> _roleManager;
         private readonly ITokenService _tokenService;
         private readonly JwtSettings _jwtSettings;
+        private readonly IMapper _mapper; // IMapper field'ı
 
-        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings)
+        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _tokenService = tokenService;
             _jwtSettings = jwtSettings.Value;
+            _mapper = mapper;
         }
 
         [HttpPost("Register")]
@@ -94,7 +93,7 @@ namespace GeminiAdvancedAPI.Controllers
             return BadRequest(ModelState);
         }
 
-        
+
 
         [Authorize] // Sadece giriş yapmış kullanıcılar erişebilir
         [HttpGet("GetUser")]
@@ -108,12 +107,9 @@ namespace GeminiAdvancedAPI.Controllers
                 return NotFound();
             }
 
-            // AutoMapper ile UserDto'ya map'leme (ileride eklenecek)
-            // var userDto = _mapper.Map<UserDto>(user);
-            // return Ok(userDto);
+            var userDto = _mapper.Map<UserDto>(user);
 
-            // Şimdilik, sadece basit bir mesaj dönelim:
-            return Ok(new { Message = $"Kullanıcı bilgileri getirildi: {user.FirstName} {user.LastName}" });
+            return Ok(userDto);
         }
 
         [Authorize] // Sadece giriş yapmış kullanıcılar erişebilir
