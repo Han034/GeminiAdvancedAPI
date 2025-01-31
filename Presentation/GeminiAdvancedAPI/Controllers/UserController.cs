@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using GeminiAdvancedAPI.Application.DTOs;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using GeminiAdvancedAPI.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace GeminiAdvancedAPI.Controllers
 {
@@ -18,13 +20,15 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly RoleManager<AppRole> _roleManager;
+        private readonly ITokenService _tokenService;
         private readonly JwtSettings _jwtSettings;
 
-        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, IOptions<JwtSettings> jwtSettings)
+        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _tokenService = tokenService;
             _jwtSettings = jwtSettings.Value;
         }
 
@@ -62,8 +66,21 @@ namespace GeminiAdvancedAPI.Controllers
                 {
                     var user = await _userManager.FindByEmailAsync(model.Email);
                     var roles = await _userManager.GetRolesAsync(user);
-                    var token = GenerateJwtToken(user, roles); // Token oluştur
-                    return Ok(new { Token = token }); // Token'ı dön
+
+                    // Access Token oluştur
+                    var accessToken = await _tokenService.CreateToken(user, roles);
+
+                    // Refresh Token oluştur
+                    var refreshToken = Guid.NewGuid().ToString();
+                    user.RefreshToken = refreshToken;
+                    user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7); // Burada sabit bir değer atadık.
+                    await _userManager.UpdateAsync(user);
+
+                    return Ok(new
+                    {
+                        Token = accessToken,
+                        RefreshToken = refreshToken
+                    });
                 }
                 else if (result.IsLockedOut)
                 {
@@ -240,6 +257,36 @@ namespace GeminiAdvancedAPI.Controllers
             {
                 return BadRequest(result.Errors);
             }
+        }
+        [HttpPost("RefreshToken")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
+
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.Now)
+            {
+                return BadRequest("Invalid refresh token.");
+            }
+            var roles = await _userManager.GetRolesAsync(user);
+            // Yeni bir access token oluştur
+            var newAccessToken = await _tokenService.CreateToken(user, roles);
+
+            // Yeni bir refresh token oluştur (isteğe bağlı)
+            var newRefreshToken = Guid.NewGuid().ToString();
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+            await _userManager.UpdateAsync(user);
+
+            return Ok(new
+            {
+                Token = newAccessToken,
+                RefreshToken = newRefreshToken
+            });
         }
     }
 }

@@ -7,6 +7,8 @@ using System.Reflection;
 using AutoMapper;
 using System.Text;
 using System.Threading.Tasks;
+using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Services;
 
 namespace GeminiAdvancedAPI.Application
 {
@@ -17,7 +19,10 @@ namespace GeminiAdvancedAPI.Application
 			services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 			services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 			services.AddAutoMapper(Assembly.GetExecutingAssembly()); // AddAutoMapper satırını ekledik
-			return services;
+
+            services.AddScoped<ITokenService, TokenService>();
+
+            return services;
 		}
 	}
 }
