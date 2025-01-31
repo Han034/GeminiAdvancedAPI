@@ -3,6 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using GeminiAdvancedAPI.Application.DTOs;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace GeminiAdvancedAPI.Controllers
 {
@@ -13,12 +18,14 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly RoleManager<AppRole> _roleManager;
+        private readonly JwtSettings _jwtSettings;
 
-        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager)
+        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, IOptions<JwtSettings> jwtSettings)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _jwtSettings = jwtSettings.Value;
         }
 
         [HttpPost("Register")]
@@ -53,8 +60,10 @@ namespace GeminiAdvancedAPI.Controllers
 
                 if (result.Succeeded)
                 {
-                    // JWT token oluşturma ve dönme işlemleri burada yapılacak (ileride)
-                    return Ok(new { Message = "Login successful" });
+                    var user = await _userManager.FindByEmailAsync(model.Email);
+                    var roles = await _userManager.GetRolesAsync(user);
+                    var token = GenerateJwtToken(user, roles); // Token oluştur
+                    return Ok(new { Token = token }); // Token'ı dön
                 }
                 else if (result.IsLockedOut)
                 {
@@ -66,6 +75,37 @@ namespace GeminiAdvancedAPI.Controllers
                 }
             }
             return BadRequest(ModelState);
+        }
+
+        private string GenerateJwtToken(AppUser user, IList<string> roles)
+        {
+            var claims = new List<Claim>
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.UserName) // Eğer JWT'de username kullanmak isterseniz
+    };
+
+            // Kullanıcının rollerini claim olarak ekle
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+
+            var token = new JwtSecurityToken(
+                _jwtSettings.Issuer,
+                _jwtSettings.Audience,
+                claims,
+                expires: expires,
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         [Authorize] // Sadece giriş yapmış kullanıcılar erişebilir
