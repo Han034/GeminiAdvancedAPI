@@ -21,6 +21,7 @@ namespace GeminiAdvancedAPI.Persistence.Contexts
         public DbSet<AppUser> AppUsers { get; set; }
         // DbSet'i buraya ekleyin:
         public DbSet<AppRole> AppRoles { get; set; }
+        public DbSet<FileEntity> Files { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

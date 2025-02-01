@@ -29,4 +29,8 @@
     <ProjectReference Include="..\..\Infrastructure\GeminiAdvancedAPI.Infrastructure\GeminiAdvancedAPI.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\" />
+  </ItemGroup>
+
 </Project>

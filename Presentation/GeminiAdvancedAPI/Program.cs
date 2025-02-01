@@ -18,6 +18,7 @@ using GeminiAdvancedAPI.Application.DTOs;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseWebRoot("wwwroot");
 
 // Add services to the container.
 
@@ -123,6 +124,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -135,8 +137,8 @@ app.Run();
 
 public static class ExceptionMiddlewareExtensions
 {
-	public static void UseGlobalExceptionHandling(this IApplicationBuilder app)
-	{
-		app.UseMiddleware<ExceptionMiddleware>();
-	}
+    public static void UseGlobalExceptionHandling(this IApplicationBuilder app)
+    {
+        app.UseMiddleware<ExceptionMiddleware>();
+    }
 }
