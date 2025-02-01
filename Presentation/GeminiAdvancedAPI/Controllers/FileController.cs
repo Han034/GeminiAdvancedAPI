@@ -1,8 +1,11 @@
-﻿using GeminiAdvancedAPI.Application.DTOs;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using GeminiAdvancedAPI.Application.DTOs;
 using GeminiAdvancedAPI.Domain.Entities;
 using GeminiAdvancedAPI.Persistence.Contexts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
@@ -15,12 +18,14 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<FileController> _logger; // ILogger ekleyin
+        private readonly IMapper _mapper; // IMapper field'ı
 
-        public FileController(IWebHostEnvironment hostingEnvironment, ApplicationDbContext dbContext, ILogger<FileController> logger)
+        public FileController(IWebHostEnvironment hostingEnvironment, ApplicationDbContext dbContext, ILogger<FileController> logger, IMapper mapper)
         {
             _hostingEnvironment = hostingEnvironment;
             _dbContext = dbContext;
             _logger = logger; // Logger'ı field'a atayın
+            _mapper = mapper;
         }
 
         [HttpPost("Upload")]
@@ -90,6 +95,97 @@ namespace GeminiAdvancedAPI.Controllers
                 _logger.LogError(ex, "Dosya yükleme hatası"); // Serilog eklediyseniz bu şekilde loglayabilirsiniz
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+        }
+
+        [HttpGet("GetMyFiles")]
+        [Authorize]
+        public async Task<IActionResult> GetMyFiles()
+        {
+            var currentUserName = User.Identity.Name;
+
+            if (string.IsNullOrEmpty(currentUserName))
+            {
+                return Unauthorized();
+            }
+
+            var files = await _dbContext.Files
+                .Where(f => f.UploadedBy == currentUserName)
+                .Select(f => new FileDto
+                {
+                    Id = f.Id,
+                    FileName = f.FileName,
+                    FileSize = f.FileSize,
+                    ContentType = f.ContentType,
+                    UploadedDate = f.UploadedDate,
+                    DownloadLink = Url.Action("Download", "File", new { fileId = f.Id }, Request.Scheme)
+                })
+                .ToListAsync();
+
+            return Ok(files);
+        }
+
+        [HttpGet("Download/{fileId}")]
+        [Authorize]
+        public async Task<IActionResult> Download(Guid fileId)
+        {
+            var file = await _dbContext.Files.FindAsync(fileId);
+
+            if (file == null)
+            {
+                return NotFound("File not found.");
+            }
+
+            // Sadece dosyayı yükleyen kullanıcı indirebilsin:
+            if (file.UploadedBy != User.Identity.Name && !User.IsInRole("Admin"))
+            {
+                return Unauthorized("You are not authorized to download this file.");
+            }
+
+            var filePath = Path.Combine(_hostingEnvironment.WebRootPath, file.FilePath);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound("File not found on server.");
+            }
+
+            var memory = new MemoryStream();
+            using (var stream = new FileStream(filePath, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+
+            return File(memory, file.ContentType, file.FileName);
+        }
+
+        [HttpDelete("Delete/{fileId}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(Guid fileId)
+        {
+            var file = await _dbContext.Files.FindAsync(fileId);
+
+            if (file == null)
+            {
+                return NotFound("File not found.");
+            }
+
+            // Sadece dosyayı yükleyen kullanıcı silebilsin:
+            if (file.UploadedBy != User.Identity.Name && !User.IsInRole("Admin"))
+            {
+                return Unauthorized("You are not authorized to delete this file.");
+            }
+
+            var filePath = Path.Combine(_hostingEnvironment.WebRootPath, file.FilePath);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+
+            _dbContext.Files.Remove(file);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
         }
 
         private string GenerateSeoFriendlyFileName(string fileName)
