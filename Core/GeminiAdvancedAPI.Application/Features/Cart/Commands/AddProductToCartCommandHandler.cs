@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using GeminiAdvancedAPI.Application.Exceptions;
 
 namespace GeminiAdvancedAPI.Application.Features.Cart.Commands
 {
@@ -29,21 +30,21 @@ namespace GeminiAdvancedAPI.Application.Features.Cart.Commands
             var userId = _httpContextAccessor.HttpContext.User.Identity.Name;
             if (string.IsNullOrEmpty(userId))
             {
-                throw new UnauthorizedAccessException(); //veya başka bir exception
+                throw new UnauthorizedAccessException("User not authenticated."); // Bunu da özel bir exception'a çevirebilirsiniz
             }
+
             var product = await _productRepository.GetByIdAsync(request.ProductId);
             if (product == null)
             {
-                throw new KeyNotFoundException("Product not found."); // Veya uygun bir exception
+                throw new ProductNotFoundException(request.ProductId); // Artık ProductNotFoundException fırlatıyoruz
             }
-
 
             var cart = await _unitOfWork.Carts.GetByUserIdAsync(userId);
             if (cart == null)
             {
-                cart = new Domain.Entities.Cart { UserId = userId, CartItems = new List<CartItem>() }; // CartItems'ı initialize et
+                cart = new Domain.Entities.Cart { UserId = userId, CartItems = new List<CartItem>() };
                 await _unitOfWork.Carts.AddAsync(cart);
-                await _unitOfWork.SaveChangesAsync(); // Yeni sepet oluşturuldu, ID'si lazım.
+                await _unitOfWork.SaveChangesAsync();
             }
 
             var cartItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId); // Artık null reference hatası almayacaksınız

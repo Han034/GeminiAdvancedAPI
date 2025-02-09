@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GeminiAdvancedAPI.Application.Exceptions;
 using GeminiAdvancedAPI.Application.Features.Product.Dtos;
 using GeminiAdvancedAPI.Application.Interfaces;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
@@ -22,10 +23,14 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Queries.GetProduct
 			_mapper = mapper;
 		}
 
-		public async Task<ProductDto> Handle(GetProductQuery request, CancellationToken cancellationToken)
-		{
-			var product = await _unitOfWork.Products.GetByIdAsync(request.Id);
-			return _mapper.Map<ProductDto>(product);
-		}
-	}
+        public async Task<ProductDto> Handle(GetProductQuery request, CancellationToken cancellationToken)
+        {
+            var product = await _unitOfWork.Products.GetByIdAsync(request.Id);
+            if (product == null)
+            {
+                throw new ProductNotFoundException(request.Id); // Artık ProductNotFoundException fırlatıyoruz
+            }
+            return _mapper.Map<ProductDto>(product);
+        }
+    }
 }
