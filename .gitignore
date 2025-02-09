@@ -12,5 +12,6 @@ Core/GeminiAdvancedAPI.Application/bin/*
 Core/GeminiAdvancedAPI.Application/obj/*
 Core/GeminiAdvancedAPI.Domain/obj/*
 Core/GeminiAdvancedAPI.Domain/bin/*
-
+Test/GeminiAdvancedAPI.Tests/bin/*
+Test/GeminiAdvancedAPI.Tests/obj/*
 
