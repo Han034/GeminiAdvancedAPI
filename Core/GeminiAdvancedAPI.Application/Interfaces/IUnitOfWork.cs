@@ -9,9 +9,10 @@ namespace GeminiAdvancedAPI.Application.Interfaces
 {
 	public interface IUnitOfWork : IDisposable
 	{
-		IProductRepository Products { get; }
-		// Diğer repository'ler buraya eklenecek (ör. IOrderRepository Orders { get; } )
+        IProductRepository Products { get; }
+        ICartRepository Carts { get; }
+        // Diğer repository'ler buraya eklenecek (ör. IOrderRepository Orders { get; } )
 
-		Task<int> SaveChangesAsync();
+        Task<int> SaveChangesAsync();
 	}
 }

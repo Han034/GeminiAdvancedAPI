@@ -25,6 +25,9 @@ namespace GeminiAdvancedAPI.Application.Mappings
             CreateMap<CreateProductCommand, Product>();
             CreateMap<UpdateProductCommand, Product>();
             CreateMap<AppUser, UserDto>().ReverseMap();
+            CreateMap<Cart, CartDto>();
+            CreateMap<CartItem, CartItemDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name));
 
             //AutoMapper needs a way to create an instance of IUrlHelper. Therefore we need to use a factory method.
             CreateMap<FileEntity, FileDto>()

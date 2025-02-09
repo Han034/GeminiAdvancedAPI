@@ -15,8 +15,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using GeminiAdvancedAPI.Application.DTOs;
-using GeminiAdvancedAPI.Application.Mappings;
-
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseWebRoot("wwwroot");

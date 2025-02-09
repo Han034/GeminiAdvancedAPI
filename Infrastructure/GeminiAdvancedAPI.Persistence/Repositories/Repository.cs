@@ -24,18 +24,22 @@ namespace GeminiAdvancedAPI.Persistence.Repositories
 		{
 			return await _dbContext.Set<T>().FindAsync(id);
 		}
+        public IQueryable<T> GetAll()
+        {
+            return _dbContext.Set<T>(); // Artık direkt IQueryable dönüyoruz
+        }
 
-		public async Task<List<T>> GetAllAsync()
-		{
-			return await _dbContext.Set<T>().ToListAsync();
-		}
+        public async Task<IQueryable<T>> GetAllAsync()
+        {
+            return _dbContext.Set<T>().AsQueryable(); // Artık direkt IQueryable dönüyoruz
+        }
 
-		public async Task<List<T>> GetAsync(Expression<Func<T, bool>> predicate)
-		{
-			return await _dbContext.Set<T>().Where(predicate).ToListAsync();
-		}
+        public async Task<IQueryable<T>> GetAsync(Expression<Func<T, bool>> predicate)
+        {
+            return _dbContext.Set<T>().Where(predicate).AsQueryable();
+        }
 
-		public async Task<T> AddAsync(T entity)
+        public async Task<T> AddAsync(T entity)
 		{
 			await _dbContext.Set<T>().AddAsync(entity);
 			await _dbContext.SaveChangesAsync();

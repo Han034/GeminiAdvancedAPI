@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using GeminiAdvancedAPI.Application.Features.Product.Dtos;
 using GeminiAdvancedAPI.Application.Interfaces;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,10 +24,10 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Queries.GetProducts
 			_mapper = mapper;
 		}
 
-		public async Task<List<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
-		{
-			var products = await _unitOfWork.Products.GetAllAsync();
-			return _mapper.Map<List<ProductDto>>(products);
-		}
-	}
+        public async Task<List<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
+        {
+            var products = await _unitOfWork.Products.GetAllAsync(); // IQueryable<Product> döner
+            return await products.ProjectTo<ProductDto>(_mapper.ConfigurationProvider).ToListAsync(cancellationToken); // AutoMapper + EF Core ile verimli sorgu
+        }
+    }
 }

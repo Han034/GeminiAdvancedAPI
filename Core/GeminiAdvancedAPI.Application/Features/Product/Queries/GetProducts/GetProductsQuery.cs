@@ -8,6 +8,6 @@ using System.Threading.Tasks;
 
 namespace GeminiAdvancedAPI.Application.Features.Product.Queries.GetProducts
 {
-	public record GetProductsQuery() : IRequest<List<ProductDto>>;
+    public record GetProductsQuery : IRequest<List<ProductDto>>;
 
 }
