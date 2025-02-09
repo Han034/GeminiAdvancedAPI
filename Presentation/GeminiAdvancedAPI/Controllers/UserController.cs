@@ -20,8 +20,10 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly ITokenService _tokenService;
         private readonly JwtSettings _jwtSettings;
         private readonly IMapper _mapper; // IMapper field'ı
+        private readonly IEmailService _emailService; // Ekledik
 
-        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper)
+
+        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper, IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -29,6 +31,8 @@ namespace GeminiAdvancedAPI.Controllers
             _tokenService = tokenService;
             _jwtSettings = jwtSettings.Value;
             _mapper = mapper;
+            _emailService = emailService;
+
         }
 
         [HttpPost("Register")]
@@ -259,6 +263,70 @@ namespace GeminiAdvancedAPI.Controllers
                 Token = newAccessToken,
                 RefreshToken = request.RefreshToken // Mevcut refresh token'ı dön
             });
+        }
+        [HttpPost("ForgotPassword")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Kullanıcı bulunamadı hatası dönmek yerine, işlem başarılı gibi davranmak daha güvenlidir.
+                // Bu, olası saldırganların sistemde kayıtlı e-posta adreslerini öğrenmesini engeller.
+                return Ok();
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var callbackUrl = Url.Action("ResetPassword", "User", new { userId = user.Id, token = token }, protocol: HttpContext.Request.Scheme);
+
+            // E-posta gönderme
+            //await _emailService.SendEmailAsync(model.Email, "Şifre Sıfırlama", $"Şifrenizi sıfırlamak için lütfen aşağıdaki linke tıklayın: <a href='{callbackUrl}'>Şifre Sıfırlama</a>"); //Eski kod
+            await _emailService.SendResetPasswordEmailAsync(model.Email, callbackUrl);
+            return Ok();
+        }
+        [HttpGet("ResetPassword")]
+        public IActionResult ResetPassword(string userId, string token) //Bu sayfa View'da olmalı.
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+            {
+                return BadRequest("Invalid token."); //Token boş olamaz.
+            }
+            var model = new ResetPasswordDto
+            {
+                Token = token
+            };
+            return Ok(model);
+        }
+
+
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); //Model valid değilse client'e gönder
+            }
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if (user == null)
+            {
+                //Kullanıcı bulunamadığında direk hata vermek yerine, şifre sıfırlama maili gönderilmiş gibi davran.
+                return Ok();
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            else
+            {
+                return BadRequest(result.Errors);
+            }
         }
     }
 }

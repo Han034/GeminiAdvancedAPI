@@ -26,7 +26,7 @@ namespace GeminiAdvancedAPI.Middleware
             {
                 _logger.LogError(ex, ex.Message);
                 context.Response.ContentType = "application/json";
-                var statusCode = (int)HttpStatusCode.InternalServerError;
+                var statusCode = HttpStatusCode.InternalServerError;
                 var message = "Internal Server Error";
 
                 switch (ex)
@@ -36,24 +36,24 @@ namespace GeminiAdvancedAPI.Middleware
                         message = notFoundException.Message;
                         break;
                     case ProductNotFoundException productNotFoundException:
-                        statusCode = (int)HttpStatusCode.NotFound; // 404
+                        statusCode = HttpStatusCode.NotFound; // 404
                         message = productNotFoundException.Message;
                         break;
                     case CartNotFoundException cartNotFoundException:
-                        statusCode = (int)HttpStatusCode.NotFound; // 404
+                        statusCode = HttpStatusCode.NotFound;
                         message = cartNotFoundException.Message;
                         break;
                     case CartItemNotFoundException cartItemNotFoundException:
-                        statusCode = (int)HttpStatusCode.NotFound; // 404
+                        statusCode = HttpStatusCode.NotFound;
                         message = cartItemNotFoundException.Message;
                         break;
                     case BadRequestException badRequestException:
-                        statusCode = (int)HttpStatusCode.BadRequest; //400
+                        statusCode = HttpStatusCode.BadRequest;
                         message = badRequestException.Message;
                         break;
-                    // Diğer özel exception'lar buraya eklenebilir
+                    // Diğer özel exception'lar buraya eklenebilir.
                     default:
-                        statusCode = (int)HttpStatusCode.InternalServerError; // 500
+                        statusCode = HttpStatusCode.InternalServerError;
                         if (_env.IsDevelopment())
                         {
                             message = ex.Message;
@@ -62,10 +62,10 @@ namespace GeminiAdvancedAPI.Middleware
                 }
 
                 var response = _env.IsDevelopment()
-                    ? new ErrorDetails { StatusCode = statusCode, Message = message, StackTrace = ex.StackTrace }
-                    : new ErrorDetails { StatusCode = statusCode, Message = message };
+                    ? new ErrorDetails { StatusCode = (int)statusCode, Message = message, StackTrace = ex.StackTrace }
+                    : new ErrorDetails { StatusCode = (int)statusCode, Message = message };
 
-                context.Response.StatusCode = statusCode;
+                context.Response.StatusCode = (int)statusCode;
                 await context.Response.WriteAsync(response.ToString());
             }
         }

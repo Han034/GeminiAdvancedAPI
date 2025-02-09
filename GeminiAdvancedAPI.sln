@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{C3AFF321-5F98-4819-89F4-86CCBAA8110B}"
 EndProject
@@ -18,6 +18,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI", "Presentation\GeminiAdvancedAPI\GeminiAdvancedAPI.csproj", "{7C45BBC6-250E-4279-B5E6-FAA42EB7F6CA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Application", "Core\GeminiAdvancedAPI.Application\GeminiAdvancedAPI.Application.csproj", "{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{ADC78279-29D0-4B17-AA13-6605CD2842E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeminiAdvancedAPI.Tests", "Test\GeminiAdvancedAPI.Tests\GeminiAdvancedAPI.Tests.csproj", "{EFC9F5C8-FF95-42FD-856F-DAACD1DAF737}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +49,10 @@ Global
 		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{523EA0DB-DFB1-41B1-A0B9-1AE35A802D61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFC9F5C8-FF95-42FD-856F-DAACD1DAF737}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFC9F5C8-FF95-42FD-856F-DAACD1DAF737}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFC9F5C8-FF95-42FD-856F-DAACD1DAF737}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFC9F5C8-FF95-42FD-856F-DAACD1DAF737}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
