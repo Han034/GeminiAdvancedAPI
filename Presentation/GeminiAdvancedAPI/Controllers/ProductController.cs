@@ -6,6 +6,8 @@ using GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct;
 using GeminiAdvancedAPI.Application.Features.Product.Dtos;
 using GeminiAdvancedAPI.Application.Features.Product.Queries.GetProduct;
 using GeminiAdvancedAPI.Application.Features.Product.Queries.GetProducts;
+using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Services;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +20,13 @@ namespace GeminiAdvancedAPI.Controllers
 	{
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
+        private readonly IQRCodeService _qrCodeService; // Ekledik
 
-        public ProductController(IMediator mediator, IMapper mapper)
+        public ProductController(IMediator mediator, IMapper mapper, IQRCodeService qrCodeService)
         {
             _mediator = mediator;
             _mapper = mapper;
+            _qrCodeService = qrCodeService; // Ekledik
         }
 
         [HttpGet("{id}")]
@@ -88,5 +92,51 @@ namespace GeminiAdvancedAPI.Controllers
 			await _mediator.Send(command);
 			return NoContent();
 		}
-	}
+
+        [HttpGet("GetProductWithQrCode/{id}")]
+        public async Task<IActionResult> GetProductWithQrCode(Guid id)
+        {
+            var productDto = await _mediator.Send(new GetProductQuery(id));
+
+            if (productDto == null)
+            {
+                return NotFound();
+            }
+
+            // Ürün bilgilerini içeren bir string oluştur (örneğin, JSON formatında)
+            var qrText = $"ProductId: {productDto.Id}, Name: {productDto.Name}, Price: {productDto.Price}";
+            // İsterseniz, daha fazla bilgiyi JSON formatında ekleyebilirsiniz:
+            // var qrText = System.Text.Json.JsonSerializer.Serialize(productDto);
+
+            var qrCodeBytes = _qrCodeService.GenerateQrCode(qrText);
+
+            // QR kodu ve ürün bilgilerini içeren bir obje dön
+            return Ok(new
+            {
+                Product = productDto,
+                QrCode = Convert.ToBase64String(qrCodeBytes) // Base64'e çevirerek dönüyoruz
+            });
+
+            // Alternatif olarak, QR kodu direkt olarak bir image olarak da dönebilirsiniz:
+            // return File(qrCodeBytes, "image/png");
+        }
+        [HttpGet("GetProductWithQrCode2/{id}")]
+        public async Task<IActionResult> GetProductWithQrCode2(Guid id)
+        {
+            var productDto = await _mediator.Send(new GetProductQuery(id));
+
+            if (productDto == null)
+            {
+                return NotFound();
+            }
+
+            // Ürün bilgilerini içeren bir string oluştur (örneğin, JSON formatında)
+            var qrText = $"ProductId: {productDto.Id}, Name: {productDto.Name}, Price: {productDto.Price}";
+
+            var qrCodeBytes = _qrCodeService.GenerateQrCode(qrText);
+
+            // QR kodu bir resim olarak dön
+            return File(qrCodeBytes, "image/png");
+        }
+    }
 }

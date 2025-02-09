@@ -21,7 +21,7 @@ namespace GeminiAdvancedAPI.Application
 			services.AddAutoMapper(Assembly.GetExecutingAssembly()); // AddAutoMapper satırını ekledik
 
             services.AddScoped<ITokenService, TokenService>();
-
+            services.AddScoped<IQRCodeService, QRCodeService>();
             return services;
 		}
 	}
