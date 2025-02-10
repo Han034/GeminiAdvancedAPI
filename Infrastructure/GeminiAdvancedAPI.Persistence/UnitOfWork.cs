@@ -16,14 +16,14 @@ namespace GeminiAdvancedAPI.Persistence
         private bool disposed = false;
 
         public IProductRepository Products { get; private set; }
-        public ICartRepository Carts { get; private set; }
+        //public ICartRepository Carts { get; private set; }
 
 
         public UnitOfWork(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
             Products = new ProductRepository(_dbContext);
-            Carts = new CartRepository(_dbContext);
+            //Carts = new CartRepository(_dbContext);
         }
 
         public async Task<int> SaveChangesAsync()

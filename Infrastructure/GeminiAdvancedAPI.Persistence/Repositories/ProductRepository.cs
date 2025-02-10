@@ -9,17 +9,19 @@ using System.Threading.Tasks;
 
 namespace GeminiAdvancedAPI.Persistence.Repositories
 {
-	public class ProductRepository : Repository<Product>, IProductRepository
-	{
-		public ProductRepository(ApplicationDbContext dbContext) : base(dbContext)
-		{
-		}
+    public class ProductRepository : Repository<Product>, IProductRepository
+    {
+        public ProductRepository(ApplicationDbContext dbContext) : base(dbContext)
+        {
+        }
 
-		// Product'a özel metotların implementasyonları buraya eklenebilir.
-		// Örneğin:
-		// public async Task<List<Product>> GetProductsByCategoryIdAsync(int categoryId)
-		// {
-		//     return await _dbContext.Products.Where(p => p.CategoryId == categoryId).ToListAsync();
-		// }
-	}
+        public IQueryable<Product> GetAll()
+        {
+            return _dbContext.Set<Product>();
+        }
+        public async Task<IQueryable<Product>> GetAllAsync() // IProductRepository içerisindeki bu metodu implemente et.
+        {
+            return await Task.FromResult(GetAll());
+        }
+    }
 }

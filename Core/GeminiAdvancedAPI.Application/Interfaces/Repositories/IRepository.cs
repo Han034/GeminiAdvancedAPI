@@ -8,14 +8,13 @@ using System.Threading.Tasks;
 
 namespace GeminiAdvancedAPI.Application.Interfaces.Repositories
 {
-	public interface IRepository<T> where T : BaseEntity
-	{
+    public interface IRepository<T> where T : BaseEntity
+    {
         Task<T> GetByIdAsync(Guid id);
-        Task<IQueryable<T>> GetAllAsync(); // Dönüş tipi IQueryable<T> oldu
+        IQueryable<T> GetAll();
         Task<IQueryable<T>> GetAsync(Expression<Func<T, bool>> predicate);
         Task<T> AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);
-        IQueryable<T> GetAll();
     }
 }

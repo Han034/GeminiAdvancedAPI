@@ -1,41 +1,119 @@
-﻿using GeminiAdvancedAPI.Application.Interfaces.Repositories;
+﻿using GeminiAdvancedAPI.Application.DTOs;
+using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using GeminiAdvancedAPI.Domain.Entities;
 using GeminiAdvancedAPI.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace GeminiAdvancedAPI.Persistence.Repositories
 {
-    public class CartRepository : Repository<Cart>, ICartRepository
+    public class CartRepository : ICartRepository
     {
-        public CartRepository(ApplicationDbContext dbContext) : base(dbContext)
+        private readonly IDistributedCache _cache;
+        private readonly string _cartKeyPrefix = "cart:"; // Redis key'leri için ön ek
+
+        public CartRepository(IDistributedCache cache) // Sadece IDistributedCache
         {
+            _cache = cache;
         }
 
-        public async Task<Cart> GetByUserIdAsync(string userId)
+        private string GetCartKey(string userId) => $"{_cartKeyPrefix}{userId}";
+
+        public async Task<CartDto> GetByUserIdAsync(string userId)
         {
-            return await _dbContext.Carts
-                .Include(c => c.CartItems) // Sepet öğelerini de dahil et (eager loading)
-                .ThenInclude(ci => ci.Product) // İsteğe bağlı: Her bir sepet öğesinin Product bilgisini de dahil et
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cartKey = GetCartKey(userId);
+            var cachedCart = await _cache.GetStringAsync(cartKey);
+            return cachedCart == null ? null : JsonSerializer.Deserialize<CartDto>(cachedCart);
         }
 
+        public async Task AddOrUpdateCartAsync(CartDto cartDto)
+        {
+            var cartKey = GetCartKey(cartDto.UserId);
+            var serializedCart = JsonSerializer.Serialize(cartDto);
+            await _cache.SetStringAsync(cartKey, serializedCart, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7) // Örnek: 7 gün sonra expire olsun
+            });
+        }
+
+        public async Task DeleteCartAsync(string userId)
+        {
+            var cartKey = GetCartKey(userId);
+            await _cache.RemoveAsync(cartKey);
+        }
         public async Task<int> GetCartItemCountAsync(string userId)
         {
-            var cart = await _dbContext.Carts
-                .Include(c => c.CartItems)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null)
+            var cartDto = await GetByUserIdAsync(userId);
+            if (cartDto == null)
             {
                 return 0;
             }
 
-            return cart.CartItems.Sum(item => item.Quantity);
+            return cartDto.CartItems.Sum(item => item.Quantity);
+        }
+        public async Task RemoveItemFromCartAsync(string userId, Guid productId, int quantity)
+        {
+            var cart = await GetByUserIdAsync(userId);
+
+            if (cart == null)
+            {
+                throw new KeyNotFoundException("Cart Not Found");
+            }
+            var cartItem = cart.CartItems.FirstOrDefault(x => x.ProductId == productId);
+
+            if (cartItem == null)
+            {
+                throw new KeyNotFoundException("CartItem Not Found");
+            }
+
+            if (quantity >= cartItem.Quantity)
+            {
+                cart.CartItems.Remove(cartItem);
+            }
+            else
+            {
+                cartItem.Quantity -= quantity;
+            }
+            await AddOrUpdateCartAsync(cart);
+
+        }
+        public async Task UpdateCartItemQuantityAsync(string userId, Guid productId, int quantity)
+        {
+            var cart = await GetByUserIdAsync(userId);
+
+            if (cart == null)
+            {
+                throw new KeyNotFoundException("Cart not found.");
+            }
+
+            var cartItem = cart.CartItems.FirstOrDefault(x => x.ProductId == productId);
+
+            if (cartItem == null)
+            {
+                throw new KeyNotFoundException("Product not found in cart.");
+            }
+
+            cartItem.Quantity = quantity;
+
+            if (cartItem.Quantity <= 0)
+            {
+                cart.CartItems.Remove(cartItem);
+            }
+
+            await AddOrUpdateCartAsync(cart);
+        }
+
+        public async Task ClearCartAsync(string userId)
+        {
+            var cartKey = GetCartKey(userId); // Redis key'ini al
+            await _cache.RemoveAsync(cartKey); // Redis'ten sepeti sil
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,23 +11,16 @@ namespace GeminiAdvancedAPI.Application.Features.Cart.Commands.ClearCart
 {
     public class ClearCartCommandHandler : IRequestHandler<ClearCartCommand>
     {
-        private readonly IUnitOfWork _unitOfWork;
-        public ClearCartCommandHandler(IUnitOfWork unitOfWork)
+        private readonly ICartRepository _cartRepository; // IUnitOfWork yerine ICartRepository
+
+        public ClearCartCommandHandler(ICartRepository cartRepository) // Constructor'da ICartRepository alın
         {
-            _unitOfWork = unitOfWork;
+            _cartRepository = cartRepository;
         }
 
         public async Task Handle(ClearCartCommand request, CancellationToken cancellationToken)
         {
-            var cart = await _unitOfWork.Carts.GetByUserIdAsync(request.UserId);
-            if (cart == null)
-            {
-                return; // Sepet yoksa bir şey yapma (veya hata fırlatılabilir)
-            }
-
-            cart.CartItems.Clear(); // Sepetteki tüm öğeleri temizle
-
-            await _unitOfWork.SaveChangesAsync();
+            await _cartRepository.ClearCartAsync(request.UserId); // Doğrudan repository metodunu çağırın
         }
     }
 }

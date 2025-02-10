@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GeminiAdvancedAPI.Application.DTOs
+namespace GeminiAdvancedAPI.Application.DTOs.PagedResult
 {
-    public class PagedResult<T>
+    public class PagedResult<T> : IPagedResult<T>
     {
         public List<T> Items { get; set; }
         public int PageNumber { get; set; }
@@ -21,6 +21,12 @@ namespace GeminiAdvancedAPI.Application.DTOs
             PageSize = pageSize;
             TotalCount = totalCount;
             TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        }
+
+        //Boş constructor ekleyelim
+        public PagedResult()
+        {
+            Items = new List<T>();
         }
     }
 }

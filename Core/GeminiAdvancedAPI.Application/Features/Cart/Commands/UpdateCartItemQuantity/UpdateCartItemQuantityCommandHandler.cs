@@ -1,5 +1,7 @@
 ﻿using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,36 +12,30 @@ namespace GeminiAdvancedAPI.Application.Features.Cart.Commands.UpdateCartItemQua
 {
     public class UpdateCartItemQuantityCommandHandler : IRequestHandler<UpdateCartItemQuantityCommand>
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICartRepository _cartRepository; // IUnitOfWork yerine
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UpdateCartItemQuantityCommandHandler(IUnitOfWork unitOfWork)
+        public UpdateCartItemQuantityCommandHandler(ICartRepository cartRepository, IHttpContextAccessor httpContextAccessor)
         {
-            _unitOfWork = unitOfWork;
+            _cartRepository = cartRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task Handle(UpdateCartItemQuantityCommand request, CancellationToken cancellationToken)
         {
-            var cart = await _unitOfWork.Carts.GetByUserIdAsync(request.UserId);
-            if (cart == null)
+            var userId = _httpContextAccessor.HttpContext.User.Identity.Name;
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new KeyNotFoundException("Cart not found."); // Veya uygun bir exception
+                if (_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("MyShoppingCart", out string cartId))
+                {
+                    userId = cartId;
+                }
+                else
+                {
+                    throw new UnauthorizedAccessException("User not authenticated."); //veya başka bir exception
+                }
             }
-
-            var cartItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId);
-            if (cartItem == null)
-            {
-                throw new KeyNotFoundException("Product not found in cart."); // Veya uygun bir exception
-            }
-
-            cartItem.Quantity = request.Quantity;
-
-            if (cartItem.Quantity <= 0)
-            {
-                // Eğer miktar 0 veya daha az ise, ürünü sepetten sil
-                cart.CartItems.Remove(cartItem);
-            }
-
-            await _unitOfWork.SaveChangesAsync();
+            await _cartRepository.UpdateCartItemQuantityAsync(userId, request.ProductId, request.Quantity); //Doğrudan
         }
     }
 }

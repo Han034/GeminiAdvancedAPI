@@ -1,4 +1,5 @@
 ﻿using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -10,16 +11,15 @@ namespace GeminiAdvancedAPI.Application.Features.Cart.Queries
 {
     public class GetCartItemCountQueryHandler : IRequestHandler<GetCartItemCountQuery, int>
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICartRepository _cartRepository; // IUnitOfWork yerine
 
-        public GetCartItemCountQueryHandler(IUnitOfWork unitOfWork)
+        public GetCartItemCountQueryHandler(ICartRepository cartRepository)
         {
-            _unitOfWork = unitOfWork;
+            _cartRepository = cartRepository;
         }
-
         public async Task<int> Handle(GetCartItemCountQuery request, CancellationToken cancellationToken)
         {
-            return await _unitOfWork.Carts.GetCartItemCountAsync(request.UserId);
+            return await _cartRepository.GetCartItemCountAsync(request.UserId);
         }
     }
 }

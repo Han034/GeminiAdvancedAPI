@@ -7,6 +7,7 @@ using GeminiAdvancedAPI.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using AutoMapper;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 
 namespace GeminiAdvancedAPI.Controllers
 {
@@ -21,9 +22,9 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly JwtSettings _jwtSettings;
         private readonly IMapper _mapper; // IMapper field'ı
         private readonly IEmailService _emailService; // Ekledik
+        private readonly ICartRepository _cartRepository; // Sepet işlemleri için
 
-
-        public UserController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper, IEmailService emailService)
+        public UserController(ICartRepository cartRepository, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper, IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -32,6 +33,7 @@ namespace GeminiAdvancedAPI.Controllers
             _jwtSettings = jwtSettings.Value;
             _mapper = mapper;
             _emailService = emailService;
+            _cartRepository = cartRepository; // Dependency Injection ile alıyoruz
 
         }
 
@@ -66,40 +68,49 @@ namespace GeminiAdvancedAPI.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-
-                if (result.Succeeded)
-                {
-                    var user = await _userManager.FindByEmailAsync(model.Email);
-                    var roles = await _userManager.GetRolesAsync(user);
-
-                    // Access Token oluştur
-                    var accessToken = _tokenService.GenerateJwtToken(user, roles);
-
-                    // Refresh Token oluştur
-                    var refreshToken = Guid.NewGuid().ToString();
-                    user.RefreshToken = refreshToken;
-                    user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7); // Burada sabit bir değer atadık.
-                    await _userManager.UpdateAsync(user);
-
-                    return Ok(new
-                    {
-                        Token = accessToken,
-                        RefreshToken = refreshToken
-                    });
-                }
-                else if (result.IsLockedOut)
-                {
-                    return Unauthorized("User account locked out.");
-                }
-                else
-                {
-                    return Unauthorized("Invalid login attempt.");
-                }
+                return BadRequest(ModelState);
             }
-            return BadRequest(ModelState);
+
+
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                var roles = await _userManager.GetRolesAsync(user);
+                var accessToken = _tokenService.GenerateJwtToken(user, roles);
+
+                // Cookie'de sepet ID'si varsa ve kullanıcı giriş yaptıysa, sepetleri birleştir
+                if (Request.Cookies.TryGetValue("MyShoppingCart", out string anonymousCartId) && !string.IsNullOrEmpty(user.Id.ToString()))
+                {
+                    await MergeCartsAsync(user.Id.ToString(), anonymousCartId);
+                    // Anonim sepet ID'sini içeren cookie'yi sil
+                    Response.Cookies.Delete("MyShoppingCart");
+                }
+
+                // Refresh Token oluştur
+                var refreshToken = Guid.NewGuid().ToString();
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7); // Burada sabit bir değer atadık.
+                await _userManager.UpdateAsync(user);
+
+                return Ok(new
+                {
+                    Token = accessToken,
+                    RefreshToken = refreshToken
+                });
+            }
+            else if (result.IsLockedOut)
+            {
+                return Unauthorized("User account locked out.");
+            }
+            else
+            {
+                return Unauthorized("Invalid login attempt.");
+            }
+
         }
 
 
@@ -326,6 +337,43 @@ namespace GeminiAdvancedAPI.Controllers
             else
             {
                 return BadRequest(result.Errors);
+            }
+        }
+        private async Task MergeCartsAsync(string userId, string anonymousCartId)
+        {
+            //Kullanıcının Redis'te kayıtlı sepeti var mı?
+            var userCart = await _cartRepository.GetByUserIdAsync(userId);
+            //Anonim kullanıcının Redis'te kayıtlı sepeti var mı?
+            var anonymousCart = await _cartRepository.GetByUserIdAsync(anonymousCartId);
+
+            if (anonymousCart != null)
+            {
+                if (userCart == null)
+                {
+                    // Kullanıcının sepeti yoksa, anonim sepeti kullanıcının sepeti yap
+                    anonymousCart.UserId = userId;
+                    await _cartRepository.AddOrUpdateCartAsync(anonymousCart);
+                }
+                else
+                {
+                    // Kullanıcının sepeti varsa, anonim sepetteki ürünleri kullanıcının sepetine ekle (veya birleştir)
+                    foreach (var anonymousItem in anonymousCart.CartItems)
+                    {
+                        var existingItem = userCart.CartItems.FirstOrDefault(ci => ci.ProductId == anonymousItem.ProductId);
+                        if (existingItem == null)
+                        {
+                            userCart.CartItems.Add(anonymousItem);
+                        }
+                        else
+                        {
+                            existingItem.Quantity += anonymousItem.Quantity;
+                        }
+                    }
+                    await _cartRepository.AddOrUpdateCartAsync(userCart);
+                }
+
+                // Anonim sepeti sil
+                await _cartRepository.DeleteCartAsync(anonymousCartId);
             }
         }
     }

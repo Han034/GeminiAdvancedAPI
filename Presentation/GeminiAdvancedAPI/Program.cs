@@ -23,6 +23,7 @@ builder.WebHost.UseWebRoot("wwwroot");
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache(); // Bu satýrý ekleyin!
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -35,10 +36,16 @@ builder.Services.AddHttpContextAccessor();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 	options.UseSqlServer(connectionString));
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection"); // Connection string'i appsettings.json'dan oku
+    options.InstanceName = "GeminiAdvancedAPI_"; // (Opsiyonel) Instance name
+});
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters(); // Bu satýr zorunlu deðil
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {

@@ -1,43 +1,37 @@
 ﻿using GeminiAdvancedAPI.Application.Interfaces;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace GeminiAdvancedAPI.Application.Features.Cart.Commands.RemoveProductFromCart
 {
     public class RemoveProductFromCartCommandHandler : IRequestHandler<RemoveProductFromCartCommand>
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICartRepository _cartRepository; // IUnitOfWork yerine
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public RemoveProductFromCartCommandHandler(IUnitOfWork unitOfWork)
+        public RemoveProductFromCartCommandHandler(ICartRepository cartRepository, IHttpContextAccessor httpContextAccessor)
         {
-            _unitOfWork = unitOfWork;
+            _cartRepository = cartRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task Handle(RemoveProductFromCartCommand request, CancellationToken cancellationToken)
         {
-            var cart = await _unitOfWork.Carts.GetByUserIdAsync(request.UserId);
-            if (cart == null)
+            var userId = _httpContextAccessor.HttpContext.User.Identity.Name;
+            if (string.IsNullOrEmpty(userId))
             {
-                throw new KeyNotFoundException("Cart not found."); //veya uygun exception
+                if (_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("MyShoppingCart", out string cartId))
+                {
+                    userId = cartId;
+                }
+                else
+                {
+                    throw new UnauthorizedAccessException("User not authenticated."); //veya başka bir exception
+                }
             }
 
-            var cartItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId);
-            if (cartItem == null)
-            {
-                throw new KeyNotFoundException("Product not found in cart."); //veya uygun exception
-            }
-
-            if (request.Quantity >= cartItem.Quantity)
-            {
-                // Tüm miktarı veya daha fazlasını sil
-                cart.CartItems.Remove(cartItem);
-            }
-            else
-            {
-                // Belirtilen miktarı azalt
-                cartItem.Quantity -= request.Quantity;
-            }
-
-            await _unitOfWork.SaveChangesAsync();
+            await _cartRepository.RemoveItemFromCartAsync(userId, request.ProductId, request.Quantity); //Doğrudan
         }
     }
 }

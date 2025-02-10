@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 
 namespace GeminiAdvancedAPI.Application.Interfaces.Repositories
 {
-	public interface IProductRepository : IRepository<Product>
-	{
-		// Product'a özel metodlar buraya eklenebilir.
-		// Örneğin:
-		// Task<List<Product>> GetProductsByCategoryIdAsync(int categoryId);
-	}
+    public interface IProductRepository : IRepository<Product>
+    {
+        IQueryable<Product> GetAll(); // Zaten vardı
+        Task<IQueryable<Product>> GetAllAsync(); // İsteğe bağlı eklenebilir, ama GetAll() ile aynı işi yapar
+    }
 }

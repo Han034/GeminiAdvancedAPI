@@ -9,62 +9,63 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using GeminiAdvancedAPI.Application.Exceptions;
+using AutoMapper;
+using GeminiAdvancedAPI.Application.DTOs;
 
 namespace GeminiAdvancedAPI.Application.Features.Cart.Commands
 {
     public class AddProductToCartCommandHandler : IRequestHandler<AddProductToCartCommand>
     {
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IProductRepository _productRepository;
         private readonly IHttpContextAccessor _httpContextAccessor; // Ekledik
+        private readonly ICartRepository _cartRepository;
 
-        public AddProductToCartCommandHandler(IUnitOfWork unitOfWork, IProductRepository productRepository, IHttpContextAccessor httpContextAccessor) // Parametre olarak ekledik
+        public AddProductToCartCommandHandler(ICartRepository cartRepository, IProductRepository productRepository, IHttpContextAccessor httpContextAccessor)
         {
-            _unitOfWork = unitOfWork;
+            _cartRepository = cartRepository;
             _productRepository = productRepository;
-            _httpContextAccessor = httpContextAccessor; // Field'a atadık
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task Handle(AddProductToCartCommand request, CancellationToken cancellationToken)
         {
-            var userId = _httpContextAccessor.HttpContext.User.Identity.Name;
-            if (string.IsNullOrEmpty(userId))
-            {
-                throw new UnauthorizedAccessException("User not authenticated."); // Bunu da özel bir exception'a çevirebilirsiniz
-            }
-
+            //Doğrudan userId, command nesnesinden geliyor.
             var product = await _productRepository.GetByIdAsync(request.ProductId);
             if (product == null)
             {
-                throw new ProductNotFoundException(request.ProductId); // Artık ProductNotFoundException fırlatıyoruz
+                throw new KeyNotFoundException("Product not found."); // Veya uygun bir exception
             }
 
-            var cart = await _unitOfWork.Carts.GetByUserIdAsync(userId);
-            if (cart == null)
+            CartDto cartDto = await _cartRepository.GetByUserIdAsync(request.UserId);
+
+            if (cartDto == null)
             {
-                cart = new Domain.Entities.Cart { UserId = userId, CartItems = new List<CartItem>() };
-                await _unitOfWork.Carts.AddAsync(cart);
-                await _unitOfWork.SaveChangesAsync();
+                cartDto = new CartDto { UserId = request.UserId, CartItems = new List<CartItemDto>() };
             }
 
-            var cartItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId); // Artık null reference hatası almayacaksınız
+            var cartItem = cartDto.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId);
+
             if (cartItem == null)
             {
-                cartItem = new CartItem
+                cartItem = new CartItemDto
                 {
-                    CartId = cart.Id,
                     ProductId = request.ProductId,
+                    ProductName = product.Name, // Ürün adını DTO'ya ekliyoruz.
                     Quantity = request.Quantity,
-                    Price = product.Price // Ürünün fiyatını burada alıyoruz
+                    Price = product.Price
                 };
-                cart.CartItems.Add(cartItem);
+                if (cartDto.CartItems == null)
+                {
+                    cartDto.CartItems = new List<CartItemDto>(); // Eğer CartItems null ise, yeni bir liste oluştur
+                }
+                cartDto.CartItems.Add(cartItem);
             }
             else
             {
                 cartItem.Quantity += request.Quantity;
             }
 
-            await _unitOfWork.SaveChangesAsync();
+            await _cartRepository.AddOrUpdateCartAsync(cartDto);
         }
     }
 }
