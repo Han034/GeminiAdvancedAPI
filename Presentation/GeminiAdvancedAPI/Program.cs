@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using GeminiAdvancedAPI.Application.DTOs;
 using FluentValidation.AspNetCore;
+using GeminiAdvancedAPI.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseWebRoot("wwwroot");
@@ -85,7 +86,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    AuthorizationPolicies.Configure(options);
+});
 
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration) // Serilog ayarlarýný appsettings.json'dan okur

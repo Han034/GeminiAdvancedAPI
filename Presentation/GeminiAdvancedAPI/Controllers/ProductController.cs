@@ -13,6 +13,7 @@ using GeminiAdvancedAPI.Application.Services;
 using GeminiAdvancedAPI.Extensions;
 using GeminiAdvancedAPI.Persistence;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -108,7 +109,8 @@ namespace GeminiAdvancedAPI.Controllers
 		}
 
 		[HttpDelete("{id}")]
-		public async Task<ActionResult> Delete(Guid id)
+        [Authorize(Policy = "CanDeleteProductsPolicy")] // Claim-based authorization
+        public async Task<ActionResult> Delete(Guid id)
 		{
 			var command = new DeleteProductCommand(id);
 			await _mediator.Send(command);

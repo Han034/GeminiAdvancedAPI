@@ -14,7 +14,7 @@ namespace GeminiAdvancedAPI.Tests.Handlers
         public async Task Handle_ValidCommand_ShouldCreateProduct()
         {
             // Arrange (Düzenleme)
-            var mockUnitOfWork = new Mock<IUnitOfWork>();
+            //var mockUnitOfWork = new Mock<IUnitOfWork>(); // Artık IUnitOfWork kullanmıyoruz
             var mockProductRepository = new Mock<IProductRepository>();
             var mockMapper = new Mock<IMapper>();
 
@@ -25,13 +25,20 @@ namespace GeminiAdvancedAPI.Tests.Handlers
                     product.Id = Guid.NewGuid(); // Yeni bir GUID atayın
                     return product;
                 });
-            // IUnitOfWork Setup
-            mockUnitOfWork.Setup(u => u.Products).Returns(mockProductRepository.Object);
+
+            // IProductRepository Setup (GetAll için - eğer kullanılıyorsa)
+            // mockProductRepository.Setup(repo => repo.GetAll()).Returns(new List<Product>().AsQueryable()); //Eğer GetAll kullanılıyorsa
+
+
+            mockProductRepository.Setup(repo => repo.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1); // SaveChangesAsync için
+
             // AutoMapper'ın Map metodunun davranışını ayarlayın.
             mockMapper.Setup(m => m.Map<Product>(It.IsAny<CreateProductCommand>()))
                 .Returns((CreateProductCommand source) => new Product { Name = source.Name, Description = source.Description, Price = source.Price, Stock = source.Stock }); //Basit bir map işlemi
 
-            var handler = new CreateProductCommandHandler(mockUnitOfWork.Object, mockMapper.Object);
+            //var handler = new CreateProductCommandHandler(mockUnitOfWork.Object, mockMapper.Object); // Artık IUnitOfWork kullanmıyoruz.
+            var handler = new CreateProductCommandHandler(mockProductRepository.Object, mockMapper.Object);  // IProductRepository kullanıyoruz.
             var command = new CreateProductCommand("Test Product", "Description", 10.99m, 100);
 
             // Act (Eylem)
@@ -40,7 +47,7 @@ namespace GeminiAdvancedAPI.Tests.Handlers
             // Assert (Doğrulama)
             result.Should().NotBeEmpty(); //FluentAssertion
             mockProductRepository.Verify(repo => repo.AddAsync(It.IsAny<Product>()), Times.Once); //Repository çağrılmış mı kontrolü
-            mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
+            mockProductRepository.Verify(repo => repo.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once); // SaveChangesAsync çağrılmış mı?
         }
     }
 }

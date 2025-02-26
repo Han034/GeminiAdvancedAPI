@@ -50,6 +50,9 @@ namespace GeminiAdvancedAPI.Controllers
                     // İsteğe bağlı: Kullanıcıya rol atama
                     await _userManager.AddToRoleAsync(user, "User");
 
+                    //// Kullanıcıya claim ekleme (ÖRNEK)
+                    //await _dbContext.UserClaims.AddAsync(new AppUserClaim { UserId = user.Id, ClaimType = "CanDeleteProducts", ClaimValue = "true" });
+                    //await _dbContext.SaveChangesAsync();
                     // Refresh Token oluştur ve ata
                     user.RefreshToken = Guid.NewGuid().ToString();
                     user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationDays); // _jwtSettings'e erişiminiz olduğundan emin olun
@@ -80,7 +83,7 @@ namespace GeminiAdvancedAPI.Controllers
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
                 var roles = await _userManager.GetRolesAsync(user);
-                var accessToken = _tokenService.GenerateJwtToken(user, roles);
+                var accessToken = _tokenService.CreateToken(user, roles);
 
                 // Cookie'de sepet ID'si varsa ve kullanıcı giriş yaptıysa, sepetleri birleştir
                 if (Request.Cookies.TryGetValue("MyShoppingCart", out string anonymousCartId) && !string.IsNullOrEmpty(user.Id.ToString()))
@@ -263,7 +266,7 @@ namespace GeminiAdvancedAPI.Controllers
             var roles = await _userManager.GetRolesAsync(user);
 
             // Yeni bir access token oluştur
-            var newAccessToken = _tokenService.GenerateJwtToken(user, roles);
+            var newAccessToken = _tokenService.CreateToken(user, roles);
 
             // Refresh token'ın kullanım ömrünü uzat
             user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationDays);
@@ -339,6 +342,7 @@ namespace GeminiAdvancedAPI.Controllers
                 return BadRequest(result.Errors);
             }
         }
+
         private async Task MergeCartsAsync(string userId, string anonymousCartId)
         {
             //Kullanıcının Redis'te kayıtlı sepeti var mı?

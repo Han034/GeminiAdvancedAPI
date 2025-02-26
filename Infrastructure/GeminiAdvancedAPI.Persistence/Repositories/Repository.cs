@@ -53,5 +53,9 @@ namespace GeminiAdvancedAPI.Persistence.Repositories
             await Task.CompletedTask;
 
         }
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

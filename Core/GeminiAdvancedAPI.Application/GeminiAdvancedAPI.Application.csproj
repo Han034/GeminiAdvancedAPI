@@ -23,4 +23,8 @@
     <ProjectReference Include="..\GeminiAdvancedAPI.Domain\GeminiAdvancedAPI.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\Identity\" />
+  </ItemGroup>
+
 </Project>

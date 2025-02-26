@@ -24,6 +24,7 @@ namespace GeminiAdvancedAPI.Persistence.Contexts
         public DbSet<FileEntity> Files { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<AppUserClaim> UserClaims { get; set; } // AppUserClaim için DbSet
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
