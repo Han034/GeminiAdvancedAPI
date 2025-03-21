@@ -48,6 +48,12 @@ namespace GeminiAdvancedAPI.Persistence.Data
                     // Admin kullanıcısına Admin rolünü ata
                     await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
+                else // Kullanıcı ZATEN VARSA, RefreshToken'ı güncelle:
+                {
+                    adminUser.RefreshToken = Guid.NewGuid().ToString();
+                    adminUser.RefreshTokenExpiryTime = DateTime.Now.AddDays(7); // Veya JwtSettings'den
+                    await userManager.UpdateAsync(adminUser); // GÜNCELLEME ÖNEMLİ
+                }
             }
         }
     }

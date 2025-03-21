@@ -10,6 +10,8 @@ namespace GeminiAdvancedAPI.Application.Interfaces
     public interface ITokenService
     {
         Task<string> CreateToken(AppUser user, IList<string> roles);
+        int GetRefreshTokenExpiryDays(); // Yeni metot
+
         //string GenerateJwtToken(AppUser user, IList<string> roles);
     }
 }

@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
 using GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct;
+using GeminiAdvancedAPI.Application.DTOs.Identity;
 
 namespace GeminiAdvancedAPI.Application.Mappings
 {
@@ -32,6 +33,14 @@ namespace GeminiAdvancedAPI.Application.Mappings
             //AutoMapper needs a way to create an instance of IUrlHelper. Therefore we need to use a factory method.
             CreateMap<FileEntity, FileDto>()
              .ForMember(dest => dest.DownloadLink, opt => opt.MapFrom<FileUrlResolver>());
+
+            // Kaynaktan -> Hedefe
+            CreateMap<AppUser, UserProfileDto>();
+            CreateMap<UpdateUserProfileDto, AppUser>()
+            .ForMember(dest => dest.ProfilePictureUrl, opt => opt.Ignore()); // Güncelleme sırasında ProfilePictureUrl'i şimdilik ignore et.
+
+            // Hedefden -> Kaynağa (eğer gerekliyse)
+            CreateMap<UserProfileDto, AppUser>();
 
         }
     }

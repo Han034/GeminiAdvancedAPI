@@ -22,6 +22,128 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("BlogTag", b =>
+                {
+                    b.Property<Guid>("BlogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
+
+                    b.HasKey("BlogId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("BlogTag");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Blog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("PublishedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("Blogs", (string)null);
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.BlogCategory", b =>
+                {
+                    b.Property<Guid>("BlogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("BlogId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("BlogCategories", (string)null);
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Comment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BlogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ParentCommentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("BlogId");
+
+                    b.HasIndex("ParentCommentId");
+
+                    b.ToTable("Comments", (string)null);
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tags", (string)null);
+                });
+
             modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Cart", b =>
                 {
                     b.Property<Guid>("Id")
@@ -68,6 +190,28 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("CartItems");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.FileEntity", b =>
@@ -156,11 +300,13 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -180,10 +326,14 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RefreshToken")
                         .IsRequired()
@@ -213,6 +363,34 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Identity.AppUserClaim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ClaimValue")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserClaims", (string)null);
                 });
 
             modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Product", b =>
@@ -349,6 +527,77 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("BlogTag", b =>
+                {
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Blog.Blog", null)
+                        .WithMany()
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Blog.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Blog", b =>
+                {
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Identity.AppUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.BlogCategory", b =>
+                {
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Blog.Blog", "Blog")
+                        .WithMany("BlogCategories")
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Category", "Category")
+                        .WithMany("BlogCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Blog");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Comment", b =>
+                {
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Identity.AppUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Blog.Blog", "Blog")
+                        .WithMany("Comments")
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Blog.Comment", "ParentComment")
+                        .WithMany("ChildComments")
+                        .HasForeignKey("ParentCommentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Blog");
+
+                    b.Navigation("ParentComment");
+                });
+
             modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.CartItem", b =>
                 {
                     b.HasOne("GeminiAdvancedAPI.Domain.Entities.Cart", "Cart")
@@ -366,6 +615,17 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Identity.AppUserClaim", b =>
+                {
+                    b.HasOne("GeminiAdvancedAPI.Domain.Entities.Identity.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -419,9 +679,26 @@ namespace GeminiAdvancedAPI.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Blog", b =>
+                {
+                    b.Navigation("BlogCategories");
+
+                    b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Blog.Comment", b =>
+                {
+                    b.Navigation("ChildComments");
+                });
+
             modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Cart", b =>
                 {
                     b.Navigation("CartItems");
+                });
+
+            modelBuilder.Entity("GeminiAdvancedAPI.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("BlogCategories");
                 });
 #pragma warning restore 612, 618
         }

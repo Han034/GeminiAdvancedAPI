@@ -1,4 +1,5 @@
 ﻿using GeminiAdvancedAPI.Domain.Entities;
+using GeminiAdvancedAPI.Domain.Entities.Blog;
 using GeminiAdvancedAPI.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,11 @@ namespace GeminiAdvancedAPI.Persistence.Contexts
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<AppUserClaim> UserClaims { get; set; } // AppUserClaim için DbSet
-
+        public DbSet<Blog> Blogs { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<BlogCategory> BlogCategories { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

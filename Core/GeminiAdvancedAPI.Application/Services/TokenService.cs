@@ -27,12 +27,12 @@ namespace GeminiAdvancedAPI.Application.Services
         public async Task<string> CreateToken(AppUser user, IList<string> roles)
         {
             var claims = new List<Claim>
-        {
+            {
             new Claim(JwtRegisteredClaimNames.Sub, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.UserName) // veya user.Email
-        };
+            };
 
             // Kullanıcının rollerini claim olarak ekle
             foreach (var role in roles)
@@ -57,6 +57,11 @@ namespace GeminiAdvancedAPI.Application.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public int GetRefreshTokenExpiryDays()
+        {
+            return _jwtSettings.RefreshTokenExpirationDays;
         }
 
         //public string GenerateJwtToken(AppUser user, IList<string> roles)

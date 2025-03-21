@@ -131,7 +131,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
-	app.UseGlobalExceptionHandling();
+    //API'DE HATA ALDIÐINDA BURAYI YORUM SATIRI YAPARAK DAHA AYRINTILI HATA ALABÝLÝRSÝN :)
+	//app.UseGlobalExceptionHandling(); 
 	app.UseSwaggerUI();
 }
 

@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using AutoMapper;
 using GeminiAdvancedAPI.Application.Interfaces.Repositories;
+using GeminiAdvancedAPI.Application.DTOs.Identity;
+using System.Security.Claims;
 
 namespace GeminiAdvancedAPI.Controllers
 {
@@ -23,8 +25,10 @@ namespace GeminiAdvancedAPI.Controllers
         private readonly IMapper _mapper; // IMapper field'ı
         private readonly IEmailService _emailService; // Ekledik
         private readonly ICartRepository _cartRepository; // Sepet işlemleri için
+        private readonly IWebHostEnvironment _hostingEnvironment; // IWebHostEnvironment'ı ekleyin
 
-        public UserController(ICartRepository cartRepository, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper, IEmailService emailService)
+
+        public UserController(IWebHostEnvironment hostingEnvironment,ICartRepository cartRepository, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, RoleManager<AppRole> roleManager, ITokenService tokenService, IOptions<JwtSettings> jwtSettings, IMapper mapper, IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -34,9 +38,9 @@ namespace GeminiAdvancedAPI.Controllers
             _mapper = mapper;
             _emailService = emailService;
             _cartRepository = cartRepository; // Dependency Injection ile alıyoruz
+            _hostingEnvironment = hostingEnvironment; // IWebHostEnvironment'ı atayın
 
         }
-
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterModel model)
         {
@@ -50,14 +54,6 @@ namespace GeminiAdvancedAPI.Controllers
                     // İsteğe bağlı: Kullanıcıya rol atama
                     await _userManager.AddToRoleAsync(user, "User");
 
-                    //// Kullanıcıya claim ekleme (ÖRNEK)
-                    //await _dbContext.UserClaims.AddAsync(new AppUserClaim { UserId = user.Id, ClaimType = "CanDeleteProducts", ClaimValue = "true" });
-                    //await _dbContext.SaveChangesAsync();
-                    // Refresh Token oluştur ve ata
-                    user.RefreshToken = Guid.NewGuid().ToString();
-                    user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationDays); // _jwtSettings'e erişiminiz olduğundan emin olun
-                    await _userManager.UpdateAsync(user); // Kullanıcıyı güncelle
-
                     return Ok(new { UserId = user.Id });
                 }
                 else
@@ -67,6 +63,43 @@ namespace GeminiAdvancedAPI.Controllers
             }
             return BadRequest(ModelState);
         }
+        //[HttpPost("Register")]
+        //public async Task<IActionResult> Register(RegisterModel model)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        var user = new AppUser { UserName = model.Email, Email = model.Email, FirstName = model.FirstName, LastName = model.LastName };
+        //        var result = await _userManager.CreateAsync(user, model.Password);
+
+        //        if (result.Succeeded)
+        //        {
+        //            // İsteğe bağlı: Kullanıcıya rol atama
+        //            await _userManager.AddToRoleAsync(user, "User");
+
+        //            //// Kullanıcıya claim ekleme (ÖRNEK)
+        //            //await _dbContext.UserClaims.AddAsync(new AppUserClaim { UserId = user.Id, ClaimType = "CanDeleteProducts", ClaimValue = "true" });
+        //            //await _dbContext.SaveChangesAsync();
+        //            // Refresh Token oluştur ve ata
+        //            user.RefreshToken = Guid.NewGuid().ToString();
+        //            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_tokenService.GetRefreshTokenExpiryDays()); // _tokenService kullan
+        //            await _userManager.UpdateAsync(user);
+
+        //            return Ok(new { UserId = user.Id });
+        //        }
+        //        else
+        //        {
+        //            // Hataları incele
+        //            foreach (var error in result.Errors)
+        //            {
+        //                Console.WriteLine($"Error Code: {error.Code}, Description: {error.Description}");
+        //                // Veya, ExceptionMiddleware kullanıyorsanız:
+        //                // throw new Exception($"Identity error: {error.Code} - {error.Description}");
+        //            }
+        //            return BadRequest(result.Errors); // Bu satır zaten vardı
+        //        }
+        //    }
+        //    return BadRequest(ModelState);
+        //}
 
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginModel model)
@@ -83,7 +116,7 @@ namespace GeminiAdvancedAPI.Controllers
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
                 var roles = await _userManager.GetRolesAsync(user);
-                var accessToken = _tokenService.CreateToken(user, roles);
+                var accessToken = await _tokenService.CreateToken(user, roles); // await kullanılıyor.
 
                 // Cookie'de sepet ID'si varsa ve kullanıcı giriş yaptıysa, sepetleri birleştir
                 if (Request.Cookies.TryGetValue("MyShoppingCart", out string anonymousCartId) && !string.IsNullOrEmpty(user.Id.ToString()))
@@ -96,7 +129,7 @@ namespace GeminiAdvancedAPI.Controllers
                 // Refresh Token oluştur
                 var refreshToken = Guid.NewGuid().ToString();
                 user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7); // Burada sabit bir değer atadık.
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(_tokenService.GetRefreshTokenExpiryDays()); // Burada sabit bir değer atadık.
                 await _userManager.UpdateAsync(user);
 
                 return Ok(new
@@ -113,7 +146,6 @@ namespace GeminiAdvancedAPI.Controllers
             {
                 return Unauthorized("Invalid login attempt.");
             }
-
         }
 
 
@@ -378,6 +410,117 @@ namespace GeminiAdvancedAPI.Controllers
 
                 // Anonim sepeti sil
                 await _cartRepository.DeleteCartAsync(anonymousCartId);
+            }
+        }
+        [HttpGet("Profile")]
+        [Authorize] // Sadece giriş yapmış kullanıcılar profil bilgilerini görebilmeli
+        public async Task<ActionResult<UserProfileDto>> GetUserProfile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Token'dan kullanıcı ID'sini al
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) { return NotFound("User not found."); }
+
+            var userProfileDto = _mapper.Map<UserProfileDto>(user); // AutoMapper kullanımı
+            return Ok(userProfileDto);
+        }
+        //[HttpGet("Profile")]
+        //[Authorize]
+        //public async Task<ActionResult<UserProfileDto>> GetUserProfile()
+        //{
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    if (string.IsNullOrEmpty(userId)) { return Unauthorized(); }
+
+        //    var user = await _userManager.FindByIdAsync(userId);
+        //    if (user == null) { return NotFound("User not found."); }
+
+        //    var userProfileDto = new UserProfileDto
+        //    {
+        //        Id = user.Id,
+        //        UserName = user.UserName,
+        //        Email = user.Email,
+        //        FirstName = user.FirstName,
+        //        LastName = user.LastName,
+        //        PhoneNumber = user.PhoneNumber,
+        //        ProfilePictureUrl = user.ProfilePictureUrl
+        //    };
+
+        //    return Ok(userProfileDto);
+        //}
+
+
+        [HttpPut("Profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserProfile([FromForm] UpdateUserProfileDto model) // [FromBody] yerine [FromForm]
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // AutoMapper ile bilgileri güncelle:
+            _mapper.Map(model, user); // Bu satır, model'deki değerleri user nesnesine kopyalar.
+
+            // Profil resmi yükleme işlemleri (değişiklik yok)
+            if (model.ProfilePicture != null && model.ProfilePicture.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_hostingEnvironment.WebRootPath, "profile-pictures"); // wwwroot/profile-pictures
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.ProfilePicture.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.ProfilePicture.CopyToAsync(stream);
+                }
+
+                // Eski profil resmini sil (isteğe bağlı)
+                if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                {
+                    var oldFilePath = Path.Combine(_hostingEnvironment.WebRootPath, user.ProfilePictureUrl);
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                user.ProfilePictureUrl = Path.Combine("profile-pictures", fileName); // Veritabanına kaydedilecek yol
+            }
+
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                //Kullanıcının token'ını güncellemek için
+                var roles = await _userManager.GetRolesAsync(user);
+                var token = _tokenService.CreateToken(user, roles);
+
+                return Ok(new { message = "Profile updated successfully.", token = token });
+            }
+            else
+            {
+                return BadRequest(result.Errors);
             }
         }
     }
