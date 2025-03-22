@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Routing;
 using GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct;
 using GeminiAdvancedAPI.Application.DTOs.Identity;
+using GeminiAdvancedAPI.Domain.Entities.Blog;
+using GeminiAdvancedAPI.Application.Features.Tag.DTOs;
 
 namespace GeminiAdvancedAPI.Application.Mappings
 {
@@ -42,6 +44,14 @@ namespace GeminiAdvancedAPI.Application.Mappings
             // Hedefden -> Kaynağa (eğer gerekliyse)
             CreateMap<UserProfileDto, AppUser>();
 
+            CreateMap<Category, CategoryDto>(); // Category -> CategoryDto
+                                                // Eğer Category'den CreateCategoryCommand'a veya UpdateCategoryCommand'a map'leme yapmanız gerekirse:
+                                                // CreateMap<Category, CreateCategoryCommand>();
+                                                // CreateMap<Category, UpdateCategoryCommand>();
+            CreateMap<Tag, TagDto>(); // Tag -> TagDto
+                                      // Eğer Tag'den CreateTagCommand veya UpdateTagCommand'a map'leme yapmanız gerekirse:
+                                      // CreateMap<Tag, CreateTagCommand>();
+                                      // CreateMap<Tag, UpdateTagCommand>();
         }
     }
 }

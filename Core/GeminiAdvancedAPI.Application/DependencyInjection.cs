@@ -23,6 +23,7 @@ namespace GeminiAdvancedAPI.Application
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IQRCodeService, QRCodeService>();
             services.AddScoped<IEmailService, EmailService>();
+
             return services;
 		}
 	}
