@@ -17,4 +17,14 @@ namespace GeminiAdvancedAPI.Application.DTOs.Blog
         public List<int> CategoryIds { get; set; } = new();
         public List<int> TagIds { get; set; } = new();
     }
+    public class UpdateBlogRequestDto
+    {
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public DateTime PublishedDate { get; set; }
+        public bool IsPublished { get; set; }
+        public string? ImageUrl { get; set; }
+        public List<int> CategoryIds { get; set; } = new();
+        public List<int> TagIds { get; set; } = new();
+    }
 }

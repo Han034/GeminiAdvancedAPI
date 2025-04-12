@@ -4,19 +4,11 @@ using GeminiAdvancedAPI.Application.Features.Product.Commands.CreateProduct;
 using GeminiAdvancedAPI.Application.Features.Product.Dtos;
 using GeminiAdvancedAPI.Domain.Entities;
 using GeminiAdvancedAPI.Domain.Entities.Identity;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Routing;
 using GeminiAdvancedAPI.Application.Features.Product.Commands.UpdateProduct;
 using GeminiAdvancedAPI.Application.DTOs.Identity;
 using GeminiAdvancedAPI.Domain.Entities.Blog;
 using GeminiAdvancedAPI.Application.Features.Tag.DTOs;
+using GeminiAdvancedAPI.Application.DTOs.Blog;
 
 namespace GeminiAdvancedAPI.Application.Mappings
 {
@@ -44,14 +36,15 @@ namespace GeminiAdvancedAPI.Application.Mappings
             // Hedefden -> Kaynağa (eğer gerekliyse)
             CreateMap<UserProfileDto, AppUser>();
 
-            CreateMap<Category, CategoryDto>(); // Category -> CategoryDto
+            CreateMap<Category, Features.Category.DTOs.CategoryDto>(); // Category -> CategoryDto
                                                 // Eğer Category'den CreateCategoryCommand'a veya UpdateCategoryCommand'a map'leme yapmanız gerekirse:
                                                 // CreateMap<Category, CreateCategoryCommand>();
                                                 // CreateMap<Category, UpdateCategoryCommand>();
-            CreateMap<Tag, TagDto>(); // Tag -> TagDto
+            CreateMap<Tag, Features.Tag.DTOs.TagDto>(); // Tag -> TagDto
                                       // Eğer Tag'den CreateTagCommand veya UpdateTagCommand'a map'leme yapmanız gerekirse:
                                       // CreateMap<Tag, CreateTagCommand>();
                                       // CreateMap<Tag, UpdateTagCommand>();
+            CreateMap<Blog, Features.Blog.DTOs.BlogDto>();
         }
     }
 }

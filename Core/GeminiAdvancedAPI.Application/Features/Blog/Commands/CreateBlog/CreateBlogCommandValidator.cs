@@ -15,10 +15,6 @@ namespace GeminiAdvancedAPI.Application.Features.Blog.Commands.CreateBlog
                 .NotEmpty().WithMessage("{PropertyName} is required.")
                 .NotNull();
 
-            RuleFor(x => x.AuthorId)
-               .NotEmpty().WithMessage("{PropertyName} is required.")
-               .NotNull();
-
             RuleFor(x => x.PublishedDate)
                 .NotEmpty().WithMessage("{PropertyName} is required.")
                 .NotNull();

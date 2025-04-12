@@ -1,4 +1,5 @@
-﻿using GeminiAdvancedAPI.Domain.Entities.Blog;
+﻿using GeminiAdvancedAPI.Domain.Entities;
+using GeminiAdvancedAPI.Domain.Entities.Blog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace GeminiAdvancedAPI.Application.Interfaces.Repositories
         Task DeleteAsync(int id);
         Task<bool> TagExistsAsync(string tagName);
         Task<Tag> GetTagByNameAsync(string tagName); //Tag name ile getirme.
+        IQueryable<Category> GetAll();
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using GeminiAdvancedAPI.Application.Features.Tag.Commands.CreateTag;
+﻿using GeminiAdvancedAPI.Application.DTOs.Blog;
+using GeminiAdvancedAPI.Application.Features.Tag.Commands.CreateTag;
 using GeminiAdvancedAPI.Application.Features.Tag.Commands.DeleteTag;
 using GeminiAdvancedAPI.Application.Features.Tag.Commands.UpdateTag;
 using GeminiAdvancedAPI.Application.Features.Tag.Queries.GetTagById;
@@ -47,13 +48,17 @@ namespace GeminiAdvancedAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateTagCommand command)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateTagRequestDto requestDto) // Body'den UpdateTagRequestDto alıyoruz
         {
-            if (id != command.Id)
+            if (!ModelState.IsValid) // Eğer FluentValidation kullanacaksanız
             {
-                return BadRequest("ID mismatch");
+                return BadRequest(ModelState);
             }
+
+            // Command'i burada oluşturuyoruz, route'dan gelen ID ve body'den gelen Name ile
+            var command = new UpdateTagCommand(id, requestDto.Name);
             await _mediator.Send(command);
+
             return NoContent(); // 204 No Content
         }
 

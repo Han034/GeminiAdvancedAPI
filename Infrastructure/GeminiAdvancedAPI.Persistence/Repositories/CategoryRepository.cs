@@ -55,5 +55,10 @@ namespace GeminiAdvancedAPI.Persistence.Repositories
         {
             return await _context.Categories.AnyAsync(c => c.Name == categoryName);
         }
+
+        public IQueryable<Category> GetAll() // Yeni metot implementasyonu
+        {
+            return _context.Categories;
+        }
     }
 }

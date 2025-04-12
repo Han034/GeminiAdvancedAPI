@@ -11,7 +11,6 @@ namespace GeminiAdvancedAPI.Application.Features.Blog.Commands.CreateBlog
     public record CreateBlogCommand(
     [Required] string Title, // Boş olamaz
     [Required] string Content, // Boş olamaz
-    Guid AuthorId,
     DateTime PublishedDate,
     bool IsPublished,
     string? ImageUrl,

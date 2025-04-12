@@ -1,4 +1,5 @@
 ﻿using GeminiAdvancedAPI.Application.Interfaces.Repositories;
+using GeminiAdvancedAPI.Domain.Entities;
 using GeminiAdvancedAPI.Domain.Entities.Blog;
 using GeminiAdvancedAPI.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,11 @@ namespace GeminiAdvancedAPI.Persistence.Repositories
         public async Task<Tag> GetTagByNameAsync(string tagName)
         {
             return await _context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
+        }
+
+        public IQueryable<Category> GetAll()
+        {
+            return _context.Categories;
         }
     }
 }

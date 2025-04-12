@@ -26,5 +26,20 @@ namespace GeminiAdvancedAPI.Application.Features.Category.Queries.GetCategories
 
             return _mapper.Map<List<CategoryDto>>(result);
         }
+        //public async Task<List<CategoryDto>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
+        //{
+        //    var categories = await _categoryRepository.GetAllAsync();
+        //    // return _mapper.Map<List<CategoryDto>>(categories); // AutoMapper'ı geçici olarak devre dışı bırak
+
+        //    // Manuel mapping
+        //    var categoryDtos = categories.Select(c => new CategoryDto
+        //    {
+        //        Id = c.Id,
+        //        Name = c.Name,
+        //        Description = c.Description
+        //    }).ToList();
+
+        //    return categoryDtos;
+        //}
     }
 }

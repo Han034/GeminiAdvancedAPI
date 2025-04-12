@@ -1,4 +1,5 @@
-﻿using GeminiAdvancedAPI.Application.Features.Category.Commands.CreateCategory;
+﻿using GeminiAdvancedAPI.Application.DTOs;
+using GeminiAdvancedAPI.Application.Features.Category.Commands.CreateCategory;
 using GeminiAdvancedAPI.Application.Features.Category.Commands.DeleteCategory;
 using GeminiAdvancedAPI.Application.Features.Category.Commands.UpdateCategory;
 using GeminiAdvancedAPI.Application.Features.Category.Queries.GetCategories;
@@ -47,13 +48,17 @@ namespace GeminiAdvancedAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryCommand command)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryRequestDto requestDto)
         {
-            if (id != command.Id)
+            if (!ModelState.IsValid) // Eğer FluentValidation kullanacaksanız
             {
-                return BadRequest("ID mismatch");
+                return BadRequest(ModelState);
             }
+
+            // Command'i burada oluşturuyoruz, route'dan gelen ID ve DTO'dan gelen Name/Description ile
+            var command = new UpdateCategoryCommand(id, requestDto.Name, requestDto.Description);
             await _mediator.Send(command);
+
             return NoContent(); // 204 No Content
         }
 

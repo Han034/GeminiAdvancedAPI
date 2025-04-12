@@ -1,11 +1,11 @@
-﻿using GeminiAdvancedAPI.Application.Interfaces.Repositories;
+﻿using GeminiAdvancedAPI.Application.Exceptions;
+using GeminiAdvancedAPI.Application.Interfaces.Repositories;
 using GeminiAdvancedAPI.Domain.Entities.Blog;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace GeminiAdvancedAPI.Application.Features.Blog.Commands.CreateBlog
 {
@@ -14,58 +14,85 @@ namespace GeminiAdvancedAPI.Application.Features.Blog.Commands.CreateBlog
         private readonly IBlogRepository _blogRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly ITagRepository _tagRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<CreateBlogCommandHandler> _logger; // Logging ekleyelim
 
 
-        public CreateBlogCommandHandler(IBlogRepository blogRepository, ICategoryRepository categoryRepository, ITagRepository tagRepository)
+        public CreateBlogCommandHandler(IBlogRepository blogRepository, ICategoryRepository categoryRepository, ITagRepository tagRepository, IHttpContextAccessor httpContextAccessor,
+        ILogger<CreateBlogCommandHandler> logger)
         {
             _blogRepository = blogRepository;
             _categoryRepository = categoryRepository;
             _tagRepository = tagRepository;
+            _httpContextAccessor = httpContextAccessor; // Atama yapıldı
+                    _logger = logger; // Logger'ı ata
+
         }
 
         public async Task<Guid> Handle(CreateBlogCommand request, CancellationToken cancellationToken)
         {
+            // 1. Giriş yapmış kullanıcının ID'sini al
+            var userIdString = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid authorId))
+            {
+                throw new UnauthorizedAccessException("User is not authenticated or User ID is invalid.");
+            }
+
+            // 2. Kategori ID'lerini kontrol et
+            var existingCategoryIds = await _categoryRepository.GetAll()
+                                                .Where(c => request.CategoryIds.Contains(c.Id))
+                                                .Select(c => c.Id)
+                                                .ToListAsync(cancellationToken);
+            var invalidCategoryIds = request.CategoryIds.Except(existingCategoryIds).ToList();
+            if (invalidCategoryIds.Any())
+            {
+                throw new BadRequestException($"Invalid Category IDs: {string.Join(", ", invalidCategoryIds)}");
+            }
+
+            // 3. Tag ID'lerini kontrol et
+            var existingTagIds = await _tagRepository.GetAll()
+                                        .Where(t => request.TagIds.Contains(t.Id))
+                                        .Select(t => t.Id)
+                                        .ToListAsync(cancellationToken);
+            var invalidTagIds = request.TagIds.Except(existingTagIds).ToList();
+            if (invalidTagIds.Any())
+            {
+                throw new BadRequestException($"Invalid Tag IDs: {string.Join(", ", invalidTagIds)}");
+            }
+
+            // 4. Yeni Blog entity'sini oluştur
             var blog = new Domain.Entities.Blog.Blog
             {
                 Title = request.Title,
                 Content = request.Content,
-                AuthorId = request.AuthorId,
+                AuthorId = authorId, // Giriş yapmış kullanıcının ID'si
                 PublishedDate = request.PublishedDate,
                 IsPublished = request.IsPublished,
                 ImageUrl = request.ImageUrl,
-                BlogCategories = new List<BlogCategory>(), // Boş olarak başla, sonra doldur
-                Tags = new List<Domain.Entities.Blog.Tag>() // Boş olarak başla, sonra doldur
+                BlogCategories = new List<BlogCategory>(), // Boş olarak başlat
+                Tags = new List<Domain.Entities.Blog.Tag>() // Boş olarak başlat
             };
 
-
-            // Kategori ekleme
+            // 5. Kategorileri ekle (BlogCategories ara tablosu üzerinden)
             foreach (var categoryId in request.CategoryIds)
             {
-                var category = await _categoryRepository.GetByIdAsync(categoryId);
-                if (category != null)
-                {
-                    blog.BlogCategories.Add(new BlogCategory { CategoryId = categoryId, Blog = blog });
-                }
-                // else { // İsteğe bağlı: Kategori bulunamazsa hata fırlat
-                //     throw new NotFoundException(nameof(Category), categoryId);
-                // }
+                blog.BlogCategories.Add(new BlogCategory { CategoryId = categoryId, Blog = blog });
             }
 
-            // Tag ekleme
+            // 6. Tag'leri ekle (Tags koleksiyonuna direkt ekleme - EF Core ara tabloyu yönetir)
             foreach (var tagId in request.TagIds)
             {
                 var tag = await _tagRepository.GetByIdAsync(tagId);
-                if (tag != null)
+                if (tag != null) // Her ihtimale karşı (validasyon yaptık ama yine de)
                 {
-                    blog.Tags.Add(tag); // BlogTag ara tablosu EF Core tarafından otomatik yönetilecek
+                    blog.Tags.Add(tag);
                 }
-                // else { // İsteğe bağlı: Tag bulunamazsa hata fırlat
-                //     throw new NotFoundException(nameof(Tag), tagId);
-                // }
             }
 
-
+            // 7. Blog'u veritabanına ekle
             await _blogRepository.AddAsync(blog);
+
+            // 8. Yeni blog'un ID'sini dön
             return blog.Id;
         }
     }

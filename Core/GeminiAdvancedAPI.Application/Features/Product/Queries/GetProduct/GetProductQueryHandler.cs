@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace GeminiAdvancedAPI.Application.Features.Product.Queries.GetProduct
 {
-    public class GetProductsQueryHandler : IRequestHandler<GetProductsQuery, List<ProductDto>>
+    public class GetProductsQueryHandler : IRequestHandler<GetProductQuery, ProductDto>
     {
         private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
@@ -26,10 +26,18 @@ namespace GeminiAdvancedAPI.Application.Features.Product.Queries.GetProduct
             _mapper = mapper;
         }
 
-        public async Task<List<ProductDto>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
+        public async Task<ProductDto> Handle(GetProductQuery request, CancellationToken cancellationToken)
         {
-            var products = await _productRepository.GetAllAsync(); //IQueryable döner
-            return await products.ProjectTo<ProductDto>(_mapper.ConfigurationProvider).ToListAsync(cancellationToken); // AutoMapper ve EF Core ile verimli sorgu
+            var product = await _productRepository.GetByIdAsync(request.Id);
+
+            if (product == null)
+            {
+                // Ürün bulunamadıysa NotFoundException fırlat
+                throw new NotFoundException(nameof(Product), request.Id);
+            }
+
+            // Bulunan ürünü ProductDto'ya map'le ve döndür
+            return _mapper.Map<ProductDto>(product);
         }
     }
 }

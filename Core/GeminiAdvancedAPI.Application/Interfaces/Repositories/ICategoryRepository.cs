@@ -15,5 +15,7 @@ namespace GeminiAdvancedAPI.Application.Interfaces.Repositories
         Task UpdateAsync(Category category);
         Task DeleteAsync(int id);
         Task<bool> CategoryExistsAsync(string categoryName);
+        IQueryable<Category> GetAll(); // Bu metodu ekleyin
+
     }
 }
