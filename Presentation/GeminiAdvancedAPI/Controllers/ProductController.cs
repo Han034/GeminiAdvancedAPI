@@ -109,7 +109,7 @@ namespace GeminiAdvancedAPI.Controllers
 		}
 
 		[HttpDelete("{id}")]
-        [Authorize(Policy = "CanDeleteProductsPolicy")] // Claim-based authorization
+        [Authorize]
         public async Task<ActionResult> Delete(Guid id)
 		{
 			var command = new DeleteProductCommand(id);

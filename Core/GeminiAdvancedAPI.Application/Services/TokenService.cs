@@ -26,41 +26,45 @@ namespace GeminiAdvancedAPI.Application.Services
 
         public async Task<string> CreateToken(AppUser user, IList<string> roles)
         {
+            // Kullanıcının yanlış olan email-based NameIdentifier claim'ini sil
+            await _userManager.RemoveClaimAsync(user, new Claim(ClaimTypes.NameIdentifier, user.Email));
+
+            // Kullanıcıya ait claimleri hazırlıyoruz
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName) // veya user.Email
-                // NameIdentifier, Name, Role MANUEL olarak EKLENMEYECEK!
+                //TODO: Bu 2 satır eklenince Sub ve Jti değerleri NameIdentifier ve Name bilgisi ile çakışıyor.
+                //new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                //new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // GUID-based NameIdentifier
+                new Claim(ClaimTypes.Name, user.UserName)// veya user.Email
             };
 
-            // Kullanıcının rollerini claim olarak ekle
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
+                    // Kullanıcının rollerini claim olarak ekle
+                    foreach (var role in roles)
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, role));
+                    }
 
-            //3.IUserClaimsPrincipalFactory'den gelen *diğer* claim'leri al
-            //var principal = await _claimsPrincipalFactory.CreateAsync(user);
-            //var factoryClaims = principal.Claims;
-            //(Belki Duplicate Önleme Gerekebilir - Şimdilik Yorumda Kalsın)
-            // claims.AddRange(principal.Claims.Where(c => !claims.Any(existing => existing.Type == c.Type)));
-            //claims.AddRange(factoryClaims.Where(fc => !claims.Any(c => c.Type == fc.Type)));
+                    // Kullanıcının claim'lerini almak için IUserClaimsPrincipalFactory kullanın
+                    var userClaims = await _userManager.GetClaimsAsync(user);
 
-            // Veritabanındaki özel claim'leri UserManager ile al ve ekle
-            var userClaims = await _userManager.GetClaimsAsync(user);
-            claims.AddRange(userClaims);
+                    // Aynı türde claim varsa ekleme (özellikle NameIdentifier'ı)
+                    foreach (var claim in userClaims)
+                    {
+                        if (!claims.Any(c => c.Type == claim.Type))
+                        {
+                            claims.Add(claim);
+                        }
+                    }
 
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
                     var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
                     var expires = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
 
                     var token = new JwtSecurityToken(
                         _jwtSettings.Issuer,
                         _jwtSettings.Audience,
-                        claims, // Doğru claim listesi
+                        claims,
                         expires: expires,
                         signingCredentials: creds
                     );
@@ -74,36 +78,36 @@ namespace GeminiAdvancedAPI.Application.Services
         //     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         //     new Claim(ClaimTypes.Name, user.UserName) // veya user.Email
 
-        //    // MANUEL OLARAK NameIdentifier, Name, Role EKLEMEYİN!
-        //};
+            //    // MANUEL OLARAK NameIdentifier, Name, Role EKLEMEYİN!
+            //};
 
-        //        // Kullanıcının rollerini claim olarak ekle (BU KISIM KALABİLİR VEYA IUserClaimsPrincipalFactory'den de alabilirsiniz)
-        //        foreach (var role in roles)
-        //        {
-        //            claims.Add(new Claim(ClaimTypes.Role, role));
-        //        }
+            //        // Kullanıcının rollerini claim olarak ekle (BU KISIM KALABİLİR VEYA IUserClaimsPrincipalFactory'den de alabilirsiniz)
+            //        foreach (var role in roles)
+            //        {
+            //            claims.Add(new Claim(ClaimTypes.Role, role));
+            //        }
 
-        //        // IUserClaimsPrincipalFactory'den gelen claim'leri al
-        //        var principal = await _claimsPrincipalFactory.CreateAsync(user);
-        //        // Sadece mevcut olmayanları ekle (Duplicate önlemek için)
-        //        claims.AddRange(principal.Claims.Where(c => !claims.Any(existing => existing.Type == c.Type && existing.Value == c.Value)));
+            //        // IUserClaimsPrincipalFactory'den gelen claim'leri al
+            //        var principal = await _claimsPrincipalFactory.CreateAsync(user);
+            //        // Sadece mevcut olmayanları ekle (Duplicate önlemek için)
+            //        claims.AddRange(principal.Claims.Where(c => !claims.Any(existing => existing.Type == c.Type && existing.Value == c.Value)));
 
 
-        //        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-        //        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        //        var expires = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+            //        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+            //        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            //        var expires = DateTime.Now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
 
-        //        var token = new JwtSecurityToken(
-        //            _jwtSettings.Issuer,
-        //            _jwtSettings.Audience,
-        //            claims, // Artık doğru claim'ler
-        //            expires: expires,
-        //            signingCredentials: creds
-        //        );
+            //        var token = new JwtSecurityToken(
+            //            _jwtSettings.Issuer,
+            //            _jwtSettings.Audience,
+            //            claims, // Artık doğru claim'ler
+            //            expires: expires,
+            //            signingCredentials: creds
+            //        );
 
-        //        return new JwtSecurityTokenHandler().WriteToken(token);
-        //    }
-        //========================================================================
+            //        return new JwtSecurityTokenHandler().WriteToken(token);
+            //    }
+            //========================================================================
 
         public int GetRefreshTokenExpiryDays()
         {

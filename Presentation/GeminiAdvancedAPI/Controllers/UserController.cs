@@ -155,7 +155,8 @@ namespace GeminiAdvancedAPI.Controllers
         public async Task<IActionResult> GetUser()
         {
             // User.Identity.Name, kullanıcının email veya username bilgisini içerir.
-            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _userManager.FindByIdAsync(userIdStr); // string ID kabul eder
 
             if (user == null)
             {
@@ -522,6 +523,13 @@ namespace GeminiAdvancedAPI.Controllers
             {
                 return BadRequest(result.Errors);
             }
+        }
+        [HttpGet("debug-claims")]
+        [Authorize]
+        public IActionResult GetClaims()
+        {
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            return Ok(claims);
         }
     }
 }
